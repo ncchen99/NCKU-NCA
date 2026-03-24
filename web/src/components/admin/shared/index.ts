@@ -6,3 +6,4 @@ export { FormField } from "./form-field";
 export { AdminEmptyState } from "./admin-empty-state";
 export { AdminTableSkeleton, AdminSpinnerLoading } from "./admin-loading-state";
 export { AdminErrorState, AdminErrorBanner } from "./admin-error-state";
+export { AdminTableCheckbox } from "./admin-table-checkbox";

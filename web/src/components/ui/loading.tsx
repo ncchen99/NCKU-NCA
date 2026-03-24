@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 interface SpinnerProps {
   size?: "sm" | "md" | "lg";
   className?: string;
@@ -21,13 +23,15 @@ function Spinner({ size = "md", className = "" }: SpinnerProps) {
 
 interface SkeletonProps {
   className?: string;
+  style?: CSSProperties;
 }
 
-function Skeleton({ className = "" }: SkeletonProps) {
+function Skeleton({ className = "", style }: SkeletonProps) {
   return (
     <div
       aria-hidden="true"
-      className={`animate-pulse rounded-md bg-neutral-100 ${className}`}
+      style={style}
+      className={`animate-pulse rounded-md bg-neutral-200/60 ${className}`}
     />
   );
 }

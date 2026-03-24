@@ -12,6 +12,7 @@ import {
   ConfirmDialog,
   FormModal,
   FormField,
+  AdminTableCheckbox,
   type TabItem,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch } from "@/lib/admin-utils";
@@ -209,51 +210,55 @@ export default function DepositPage() {
       />
 
       <Card className="mt-6">
-        <AdminFilterBar
-          tabs={tabs}
-          activeTab={activeTab}
-          onTabChange={(t) => {
-            setActiveTab(t);
-            setSelected(new Set());
-          }}
-          search={search}
-          onSearchChange={setSearch}
-          searchPlaceholder="搜尋社團 ID..."
-        />
+        <div className="relative">
+          <AdminFilterBar
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={(t) => {
+              setActiveTab(t);
+              setSelected(new Set());
+            }}
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="搜尋社團 ID..."
+          />
 
-        {/* batch action toolbar */}
-        {selected.size > 0 && (
-          <div className="flex items-center gap-3 border-b border-border bg-primary/5 px-5 py-2.5">
-            <span className="text-sm font-medium text-neutral-700">
-              已選取 {selected.size} 筆
-            </span>
-            {selectedPendingCount > 0 && (
+          {/* batch action toolbar overlays filter bar to avoid layout shift */}
+          {selected.size > 0 && (
+            <div className="absolute inset-0 z-10 flex items-center gap-3 border-b border-border bg-white px-5 rounded-t-lg">
+              <span className="text-sm font-medium text-neutral-700">
+                已選取 {selected.size} 筆
+              </span>
+              {selectedPendingCount > 0 && (
+                <button
+                  className="rounded-full border border-primary/20 bg-white px-3 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                  onClick={() => setBatchConfirm({ status: "paid" })}
+                >
+                  批次標記已繳 ({selectedPendingCount})
+                </button>
+              )}
+              {selectedPaidCount > 0 && (
+                <button
+                  className="rounded-full border border-primary/20 bg-white px-3 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+                  onClick={() => setBatchConfirm({ status: "returned" })}
+                >
+                  批次退還 ({selectedPaidCount})
+                </button>
+              )}
               <button
-                className="rounded-full border border-primary/20 bg-white px-3 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
-                onClick={() => setBatchConfirm({ status: "paid" })}
+                className="ml-auto text-xs text-neutral-400 hover:text-neutral-600"
+                onClick={() => setSelected(new Set())}
               >
-                批次標記已繳 ({selectedPendingCount})
+                取消選取
               </button>
-            )}
-            {selectedPaidCount > 0 && (
-              <button
-                className="rounded-full border border-primary/20 bg-white px-3 py-1 text-[12px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
-                onClick={() => setBatchConfirm({ status: "returned" })}
-              >
-                批次退還 ({selectedPaidCount})
-              </button>
-            )}
-            <button
-              className="ml-auto text-xs text-neutral-400 hover:text-neutral-600"
-              onClick={() => setSelected(new Set())}
-            >
-              取消選取
-            </button>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {loading ? (
-          <AdminTableSkeleton rows={6} columns={[24, 120, 80, 64, 56, 80, 80]} />
+          <div className="overflow-hidden">
+            <AdminTableSkeleton rows={6} columns={[24, 120, 80, 64, 56, 80, 80]} />
+          </div>
         ) : error ? (
           <AdminErrorState message={error} onRetry={fetchDeposits} />
         ) : (
@@ -261,11 +266,10 @@ export default function DepositPage() {
             <thead>
               <tr className="bg-neutral-100 text-neutral-500">
                 <th className="h-10 w-10 px-3 text-center">
-                  <input
-                    type="checkbox"
+                  <AdminTableCheckbox
                     checked={allFilteredSelected}
                     onChange={toggleAll}
-                    className="h-3.5 w-3.5 rounded border-neutral-300 accent-primary"
+                    aria-label="全選目前篩選結果"
                   />
                 </th>
                 <th className="h-10 px-3 font-medium">社團 ID</th>
@@ -286,11 +290,10 @@ export default function DepositPage() {
                     className="border-b border-border/50 last:border-0 hover:bg-primary/5"
                   >
                     <td className="h-12 w-10 px-3 text-center">
-                      <input
-                        type="checkbox"
+                      <AdminTableCheckbox
                         checked={selected.has(dep.id)}
                         onChange={() => toggleOne(dep.id)}
-                        className="h-3.5 w-3.5 rounded border-neutral-300 accent-primary"
+                        aria-label={`選取 ${dep.club_id}`}
                       />
                     </td>
                     <td className="h-12 px-3 font-medium text-neutral-950">

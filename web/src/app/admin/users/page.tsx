@@ -172,7 +172,9 @@ export default function UsersPage() {
         />
 
         {loading ? (
-          <AdminTableSkeleton rows={6} columns={[160, 120, 64, 80, 80, 72]} />
+          <div className="overflow-hidden">
+            <AdminTableSkeleton rows={6} columns={[160, 120, 64, 80, 80, 72]} />
+          </div>
         ) : error ? (
           <AdminErrorState message={error} onRetry={fetchUsers} />
         ) : (

@@ -252,7 +252,7 @@ export default function ClubsPage() {
       />
 
       {loading ? (
-        <Card className="mt-6">
+        <Card className="mt-6 overflow-hidden">
           <AdminTableSkeleton
             rows={6}
             columns={[160, 64, 80, 120, 48]}

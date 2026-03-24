@@ -312,7 +312,9 @@ export default function FormsPage() {
         />
 
         {loading ? (
-          <AdminTableSkeleton rows={5} columns={[192, 80, 56, 48, 80, 64]} />
+          <div className="overflow-hidden">
+            <AdminTableSkeleton rows={5} columns={[192, 80, 56, 48, 80, 64]} />
+          </div>
         ) : error ? (
           <AdminErrorState message={error} onRetry={fetchForms} />
         ) : (

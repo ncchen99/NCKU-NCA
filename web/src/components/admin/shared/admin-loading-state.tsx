@@ -9,22 +9,22 @@ export function AdminTableSkeleton({
   rows = 5,
   columns = [192, 64, 56, 80],
 }: AdminTableSkeletonProps) {
+  void columns;
+
   return (
-    <div className="space-y-0">
-      {Array.from({ length: rows }).map((_, i) => (
-        <div
-          key={i}
-          className="flex items-center gap-4 border-b border-border/50 px-5 py-3"
-        >
-          {columns.map((w, j) => (
-            <Skeleton
-              key={j}
-              className={`h-4 ${j === columns.length - 1 ? "ml-auto" : ""}`}
-              style={{ width: w }}
-            />
-          ))}
+    <div className="w-full">
+      <div className="border-b border-border bg-neutral-100/50">
+        <div className="px-5 h-10 flex items-center">
+          <div className="h-3 w-full rounded bg-neutral-300/70" />
         </div>
-      ))}
+      </div>
+      <div className="divide-y divide-border/30">
+        {Array.from({ length: rows }).map((_, i) => (
+          <div key={i} className="px-5 h-12 flex items-center">
+            <Skeleton className="h-4 w-full rounded bg-neutral-300/90" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
