@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   PlusIcon,
@@ -125,6 +125,7 @@ export default function PostsPage() {
     [],
   );
   const [tagStatsLoading, setTagStatsLoading] = useState(false);
+  const tagSuggestRootRef = useRef<HTMLDivElement>(null);
 
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
@@ -151,6 +152,36 @@ export default function PostsPage() {
   useEffect(() => {
     fetchPosts();
   }, [fetchPosts]);
+
+  useEffect(() => {
+    if (!modalOpen) return;
+    let cancelled = false;
+    setTagStatsLoading(true);
+    adminFetch<{ tags: { tag: string; count: number }[] }>("/api/admin/tags")
+      .then((data) => {
+        if (!cancelled) setTagStats(data.tags ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setTagStats([]);
+      })
+      .finally(() => {
+        if (!cancelled) setTagStatsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [modalOpen]);
+
+  useEffect(() => {
+    if (!tagSuggestionsOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      const root = tagSuggestRootRef.current;
+      if (!root || root.contains(e.target as Node)) return;
+      setTagSuggestionsOpen(false);
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [tagSuggestionsOpen]);
 
   const filtered = posts.filter((p) => {
     if (!search) return true;
@@ -539,7 +570,10 @@ export default function PostsPage() {
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">
               標籤
             </label>
-            <div className="rounded-lg border border-border bg-white px-2 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30">
+            <div
+              ref={tagSuggestRootRef}
+              className="rounded-lg border border-border bg-white px-2 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
+            >
               <div className="flex items-center gap-2">
                 <input
                   value={form.tags}

@@ -94,10 +94,7 @@ export function AdminSelect({
   }, []);
 
   useLayoutEffect(() => {
-    if (!open) {
-      setMenuPos(null);
-      return;
-    }
+    if (!open) return;
     measure();
   }, [open, measure]);
 
@@ -178,7 +175,7 @@ export function AdminSelect({
     );
 
   return (
-    <div className={`relative w-full ${rootClass}`}>
+    <div className={`relative w-full ${className}`}>
       {name ? (
         <input type="hidden" name={name} value={stringValue} readOnly />
       ) : null}
@@ -191,7 +188,7 @@ export function AdminSelect({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={listboxId}
-        aria-invalid={ariaInvalid}
+        data-invalid={invalid || ariaInvalid ? "true" : undefined}
         onClick={() => !disabled && setOpen((o) => !o)}
         className={`${triggerBase} ${invalidCls}`}
       >
