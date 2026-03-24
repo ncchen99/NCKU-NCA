@@ -4,11 +4,11 @@ import { PublicLayout } from "@/components/layout/public-layout";
 export const metadata: Metadata = {
   title: "關於我們",
   description:
-    "認識國立成功大學社團聯合會（NCKU NCA）——成大最高社團自治組織，致力於社團交流、資源整合與校園文化推動。",
+    "認識國立成功大學社團聯合會（NCA）——成大最高社團自治組織，致力於社團交流、資源整合與校園文化推動。",
   openGraph: {
     title: "關於我們 | 成大社聯會",
     description:
-      "認識國立成功大學社團聯合會（NCKU NCA）——成大最高社團自治組織。",
+      "認識國立成功大學社團聯合會（NCA）——成大最高社團自治組織。",
   },
 };
 
@@ -32,7 +32,7 @@ export default function AboutPage() {
               關於我們
             </h1>
             <p className="mt-2 text-lg font-[350] text-neutral-600">
-              About NCKU NCA
+              About Club Association of NCKU
             </p>
           </div>
 
@@ -42,8 +42,7 @@ export default function AboutPage() {
               組織介紹
             </h2>
             <p className="mt-4 text-[15px] leading-[28px] text-neutral-600 text-pretty">
-              國立成功大學社團聯合會（National Cheng Kung University, Neighborhood
-              Club Association，簡稱社聯會或
+              國立成功大學社團聯合會（Club Association of National Cheng Kung University，簡稱社聯會或
               NCA）是成功大學校內各學生社團的最高自治聯合組織。社聯會負責統籌校內社團事務，包括社團評鑑、經費補助、場地協調及各項跨社團活動的舉辦。
             </p>
 

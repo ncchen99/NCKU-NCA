@@ -50,11 +50,7 @@ export function Navbar({
       <nav className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary">
-            <span className="text-[10px] font-bold leading-none text-white">
-              社
-            </span>
-          </div>
+          <img src="/logo.svg" alt="NCKU NCA Logo" className="h-7 w-7 shrink-0" />
           <span className="text-[13px] font-[650] tracking-tight text-neutral-950">
             成大社聯會{" "}
             <span className="text-neutral-400">NCKU NCA</span>

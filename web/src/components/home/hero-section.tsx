@@ -19,7 +19,7 @@ function HeroSection() {
                 aria-hidden="true"
               />
               <span className="font-mono text-[10px] uppercase tracking-[0.12em] text-neutral-600">
-                NCKU STUDENT FEDERATION — EST. 1993
+                #社團之所在#社聯之所在
               </span>
             </div>
 
@@ -30,20 +30,20 @@ function HeroSection() {
             </h1>
 
             <p className="text-[30px] font-[350] text-neutral-600">
-              官方數位平台
+              Club Association of NCKU
             </p>
 
             <div className="flex items-center gap-3 pt-2">
-              <Button variant="primary">認識組織</Button>
-              <Button variant="ghost">最新消息</Button>
+              <Button variant="primary" href="/about">認識組織</Button>
+              <Button variant="ghost" href="/news">最新消息</Button>
             </div>
           </div>
 
           {/* Right 2/5 */}
           <div className="flex w-2/5 flex-col gap-8">
             <p className="max-w-[40ch] leading-[28px] text-neutral-600 text-pretty">
-              成功大學社團聯合會（NCKU
-              NCA）是成大各社團與系所的最高自治組織，負責協調社團活動、代表會議及社博等重要事務。
+              成功大學社團聯合會（Club Association of National Cheng Kung
+              University，簡稱 NCA）是成大各社團與系所的最高自治組織，負責協調社團活動、代表會議及社博等重要事務。
             </p>
 
             <dl>

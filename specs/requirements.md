@@ -5,7 +5,8 @@
 
 ---
 
-#社團之所在#社聯之所在國立成功大學社團聯合會
+#社團之所在#社聯之所在
+國立成功大學社團聯合會
 Club Association of National Cheng Kung University
 
 ## 0. 登入限制與安全性

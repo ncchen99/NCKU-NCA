@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "成功大學社團聯合會 NCKU NCA",
+    default: "成功大學社團聯合會 NCA",
     template: "%s | 成大社聯會",
   },
   description:

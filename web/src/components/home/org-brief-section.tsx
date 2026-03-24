@@ -14,7 +14,7 @@ function OrgBriefSection() {
       <div className="mx-auto max-w-6xl px-6 py-20">
         <SectionHeading
           title="關於組織"
-          subtitle="About NCKU NCA"
+          subtitle="About Club Association of NCKU"
           className="mb-12"
         />
 
@@ -23,7 +23,7 @@ function OrgBriefSection() {
           <div className="flex flex-col gap-8">
             <div className="max-w-[52ch] space-y-5 leading-[28px] text-neutral-600 text-pretty">
               <p>
-                成功大學社團聯合會（NCKU NCA）成立於 1993
+                成功大學社團聯合會（Club Association of National Cheng Kung University，簡稱 NCA）成立於 1993
                 年，是由全校學生社團代表組成的最高自治組織。我們肩負社團運作協調、資源分配以及學生權益代言的重要任務。
               </p>
               <p>
@@ -31,8 +31,8 @@ function OrgBriefSection() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <Button variant="primary">閱讀更多</Button>
-              <Button variant="ghost">組織章程</Button>
+              <Button variant="primary" href="/about">閱讀更多</Button>
+              <Button variant="ghost" href="/charter">組織章程</Button>
             </div>
           </div>
 

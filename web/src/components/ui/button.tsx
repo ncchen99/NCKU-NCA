@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
+import Link from "next/link";
 
 type ButtonVariant = "primary" | "ghost" | "outline" | "pill";
 type ButtonSize = "sm" | "md" | "lg";
@@ -10,6 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: ButtonSize;
   active?: boolean;
   asChild?: boolean;
+  href?: string;
   children: ReactNode;
 }
 
@@ -39,6 +41,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = "md",
       active = false,
       asChild = false,
+      href,
       className = "",
       children,
       ...props
@@ -54,6 +57,23 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const combinedClassName =
       [base, variantCls, sizeCls, activeCls, className].filter(Boolean).join(" ");
+
+    if (href) {
+      if (variant === "primary") {
+        return (
+          <span className="inline-flex p-px">
+            <Link href={href} className={combinedClassName}>
+              {children}
+            </Link>
+          </span>
+        );
+      }
+      return (
+        <Link href={href} className={combinedClassName}>
+          {children}
+        </Link>
+      );
+    }
 
     if (variant === "primary") {
       return (

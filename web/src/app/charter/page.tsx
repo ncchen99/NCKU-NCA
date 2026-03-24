@@ -19,7 +19,7 @@ const chapters = [
       {
         num: "第一條",
         content:
-          "本會定名為「國立成功大學社團聯合會」（以下簡稱本會），英文名稱為 National Cheng Kung University Neighborhood Club Association（NCKU NCA）。",
+          "本會定名為「國立成功大學社團聯合會」（以下簡稱本會），英文名稱為 Club Association of National Cheng Kung University（NCA）。",
       },
       {
         num: "第二條",
