@@ -172,7 +172,7 @@
 - [ ] YAML / JSON 匯入流程 Modal（4 步驟）
 - [ ] 預覽差異（新增 / 更新 / 無變動）
 - [ ] Firestore 批次寫入
-- [ ] CSV 匯出
+- [ ] YAML / JSON 匯出
 
 ### 3.8 用戶管理 `/admin/users`
 - [x] 用戶列表 UI（角色 tabs + 表格 + mock data）
@@ -193,14 +193,14 @@
 - [ ] `/api/export/csv` — CSV 匯出通用接口
 
 ### 4.2 Firestore 資料層
-- [ ] 建立 Firestore 資料存取函數庫（`lib/firestore/`）
-- [ ] posts CRUD
-- [ ] clubs CRUD + 匯入
-- [ ] forms CRUD + responses
-- [ ] deposit_records CRUD + 狀態機
-- [ ] attendance_events + records CRUD
-- [ ] users CRUD
-- [ ] site_content CRUD
+- [x] 建立 Firestore 資料存取函數庫（`lib/firestore/`）
+- [x] posts CRUD
+- [x] clubs CRUD + 匯入
+- [x] forms CRUD + responses
+- [x] deposit_records CRUD + 狀態機
+- [x] attendance_events + records CRUD
+- [x] users CRUD
+- [x] site_content CRUD
 
 ### 4.3 Cloud Functions
 - [ ] 表單提交後自動建立 deposit_record
@@ -208,11 +208,23 @@
 - [ ] ISR 觸發 Webhook
 
 ### 4.4 Firestore Security Rules
-- [ ] 全路徑 deny-by-default
-- [ ] admin RBAC 驗證
-- [ ] 表單回覆 create-only
-- [ ] 點名 uid 一致性驗證
+- [x] 全路徑 deny-by-default
+- [x] admin RBAC 驗證
+- [x] 表單回覆 create-only
+- [x] 點名 uid 一致性驗證
 - [ ] 複合索引設定
+
+### 4.5 Firebase Storage Security Rules
+- [x] 文章圖片公開讀取、管理員寫入
+- [x] 表單附件使用者隔離
+- [x] 網站內容圖片管理
+- [x] 社團匯入檔案管理
+- [x] 匯出檔案管理
+- [x] 檔案類型與大小驗證
+
+### 4.6 資料種子腳本
+- [x] 格式化原始 Markdown 資料檔案（data/formatted/）
+- [x] Firestore seed script（site_content + clubs 寫入）
 
 ---
 
@@ -231,13 +243,13 @@
 
 ## 當前進度
 
-| Phase | 狀態 | 說明 |
-|---|---|---|
-| Phase 1 | ✅ 完成 | 基礎設施、元件庫、認證系統、Layout |
-| Phase 2 | 🔄 大部分完成 | 所有前台頁面 UI 已建立，待接入 Firestore 資料 |
-| Phase 3 | 🔄 UI 完成 | 所有後台頁面 UI + mock data 已建立，待接入 CRUD |
-| Phase 4 | 🔄 部分完成 | 3 個 API Route 完成，待建立資料層 |
-| Phase 5 | ⏳ 待開始 | 優化與上線 |
+| Phase   | 狀態         | 說明                                            |
+| ------- | ------------ | ----------------------------------------------- |
+| Phase 1 | ✅ 完成       | 基礎設施、元件庫、認證系統、Layout              |
+| Phase 2 | 🔄 大部分完成 | 所有前台頁面 UI 已建立，待接入 Firestore 資料   |
+| Phase 3 | 🔄 UI 完成    | 所有後台頁面 UI + mock data 已建立，待接入 CRUD |
+| Phase 4 | 🔄 大部分完成 | API Routes + 資料層 + Security Rules + Seed 腳本完成 |
+| Phase 5 | ⏳ 待開始     | 優化與上線                                      |
 
 ---
 
@@ -282,7 +294,16 @@ web/
 │   │   ├── firebase.ts             # Firebase Client（延遲初始化）
 │   │   ├── firebase-admin.ts       # Firebase Admin（延遲初始化）
 │   │   ├── auth-context.tsx        # AuthProvider + useAuth
-│   │   └── auth-store.ts           # Zustand UI state
+│   │   ├── auth-store.ts           # Zustand UI state
+│   │   └── firestore/              # Firestore 資料存取層（8 個模組）
+│   │       ├── index.ts            # Re-export
+│   │       ├── site-content.ts     # site_content CRUD
+│   │       ├── posts.ts            # posts CRUD
+│   │       ├── clubs.ts            # clubs CRUD + 批次匯入
+│   │       ├── users.ts            # users CRUD
+│   │       ├── forms.ts            # forms + responses CRUD
+│   │       ├── deposits.ts         # deposit_records CRUD + 狀態機
+│   │       └── attendance.ts       # attendance_events + records CRUD
 │   ├── types/
 │   │   └── index.ts                # 全專案 TypeScript 類型
 │   └── middleware.ts               # /admin/* 路由保護
@@ -304,10 +325,10 @@ web/
 
 ## 技術決策記錄
 
-| 項目 | 決策 | 原因 |
-|---|---|---|
-| Firebase SDK 初始化 | 延遲初始化（lazy） | 避免 SSG 建構時因缺少環境變數而失敗 |
-| Auth 模組導入 | 動態 import | 防止 `firebase/auth` 在伺服器端靜態生成時執行 |
-| Session 管理 | HttpOnly Cookie（5天） | 安全性考量，防止 XSS 竊取 Token |
-| 設計系統 | Tailwind CSS 4 @theme inline | 統一色彩系統，支援 CSS custom properties |
-| 字體 | Inter Variable + Geist Mono | 符合 AGENTS.md 設計規範 |
+| 項目                | 決策                         | 原因                                          |
+| ------------------- | ---------------------------- | --------------------------------------------- |
+| Firebase SDK 初始化 | 延遲初始化（lazy）           | 避免 SSG 建構時因缺少環境變數而失敗           |
+| Auth 模組導入       | 動態 import                  | 防止 `firebase/auth` 在伺服器端靜態生成時執行 |
+| Session 管理        | HttpOnly Cookie（5天）       | 安全性考量，防止 XSS 竊取 Token               |
+| 設計系統            | Tailwind CSS 4 @theme inline | 統一色彩系統，支援 CSS custom properties      |
+| 字體                | Inter Variable + Geist Mono  | 符合 AGENTS.md 設計規範                       |

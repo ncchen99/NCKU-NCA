@@ -154,7 +154,7 @@ export default function MembersPage() {
             <h2 className="text-[20px] font-[700] tracking-tight text-neutral-950">
               會長團
             </h2>
-            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {leadership.map((m) => (
                 <MemberCard key={m.email} member={m} />
               ))}

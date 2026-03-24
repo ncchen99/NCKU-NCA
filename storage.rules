@@ -1,0 +1,148 @@
+rules_version = '2';
+
+// =============================================================================
+// 成功大學社團聯合會 (NCKU NCA) — Firebase Storage 安全規則
+// =============================================================================
+//
+// 認證方式：Firebase Auth + Google OAuth（限 @gs.ncku.edu.tw 信箱）
+// 角色管理：Custom Claims → request.auth.token.role
+//
+// 角色：
+//   admin       — 完整管理權限
+//   club_member — 可於表單上傳檔案
+//   (匿名)      — 僅可讀取公開內容
+//
+// 設計原則：預設拒絕所有存取，僅明確列出的路徑才允許操作
+// =============================================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // =========================================================================
+    // 輔助函數
+    // =========================================================================
+
+    // 是否已通過 Firebase Auth 驗證
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // 是否為管理員（已驗證 + Custom Claims role == 'admin'）
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.role == 'admin';
+    }
+
+    // 是否使用成大校園信箱（@gs.ncku.edu.tw）
+    function isNckuEmail() {
+      return isAuthenticated()
+          && request.auth.token.email != null
+          && request.auth.token.email.matches('.*@gs[.]ncku[.]edu[.]tw$');
+    }
+
+    // 上傳檔案的 Content-Type 是否為圖片
+    function isImageType() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    // 上傳檔案大小是否低於指定 MB 上限
+    function fileSizeBelow(maxSizeMB) {
+      return request.resource.size <= maxSizeMB * 1024 * 1024;
+    }
+
+    // 檔案副檔名是否為允許的圖片格式（jpg, jpeg, png, gif, webp, svg）
+    function hasAllowedImageExtension(fileName) {
+      return fileName.matches('.*[.](jpg|jpeg|png|gif|webp|svg)$');
+    }
+
+    // =========================================================================
+    // 1. 文章圖片 — posts/{allPaths=**}
+    //    封面圖片與內文 Markdown 行內圖片
+    //    讀取：任何人（公開）
+    //    寫入：僅管理員
+    //    驗證：僅圖片、上限 5MB、限定副檔名
+    // =========================================================================
+    match /posts/{allPaths=**} {
+      allow read: if true;
+
+      allow write: if isAdmin()
+                   && isImageType()
+                   && fileSizeBelow(5)
+                   && hasAllowedImageExtension(allPaths);
+    }
+
+    // =========================================================================
+    // 2. 表單回覆附件 — forms/{form_id}/responses/{response_id}/{fileName}
+    //    使用者提交表單時上傳的附件
+    //    讀取：管理員可讀全部；上傳者可讀自己的檔案
+    //    建立：已驗證的成大信箱使用者（路徑須包含自身 UID）
+    //    更新/刪除：僅管理員
+    //    驗證：上限 10MB
+    // =========================================================================
+    match /forms/{form_id}/responses/{response_id}/{fileName} {
+      // 管理員可讀所有回覆；一般使用者僅可讀自己上傳的（response_id == uid）
+      allow read: if isAdmin()
+                  || (isAuthenticated() && response_id == request.auth.uid);
+
+      // 建立：成大信箱使用者，且 response_id 須等於自身 UID（確保檔案隔離）
+      allow create: if isNckuEmail()
+                    && response_id == request.auth.uid
+                    && fileSizeBelow(10);
+
+      // 覆寫與刪除：僅管理員
+      allow update, delete: if isAdmin();
+    }
+
+    // =========================================================================
+    // 3. 網站內容圖片 — site_content/{allPaths=**}
+    //    CMS 頁面使用的圖片素材
+    //    讀取：任何人（公開）
+    //    寫入：僅管理員
+    //    驗證：僅圖片、上限 5MB
+    // =========================================================================
+    match /site_content/{allPaths=**} {
+      allow read: if true;
+
+      allow write: if isAdmin()
+                   && isImageType()
+                   && fileSizeBelow(5);
+    }
+
+    // =========================================================================
+    // 4. 社團匯入檔 — clubs/imports/{fileName}
+    //    YAML / JSON 格式的社團名單原始檔
+    //    讀寫：僅管理員
+    //    驗證：上限 20MB、限定 Content-Type
+    // =========================================================================
+    match /clubs/imports/{fileName} {
+      allow read: if isAdmin();
+
+      allow write: if isAdmin()
+                   && fileSizeBelow(20)
+                   && request.resource.contentType.matches(
+                        'application/x-yaml|text/yaml|application/json|text/plain'
+                      );
+    }
+
+    // =========================================================================
+    // 5. 匯出檔案 — exports/{fileName}
+    //    後台產生的 CSV / JSON 暫存匯出檔
+    //    讀寫：僅管理員（或伺服器端 Cloud Functions）
+    //    驗證：上限 50MB、限定 Content-Type
+    // =========================================================================
+    match /exports/{fileName} {
+      allow read: if isAdmin();
+
+      allow write: if isAdmin()
+                   && fileSizeBelow(50)
+                   && request.resource.contentType.matches(
+                        'text/csv|application/json'
+                      );
+    }
+
+    // =========================================================================
+    // 預設規則：拒絕所有未明確列出的路徑
+    // 此規則無需額外撰寫 — Firebase Storage 預設即為 deny-all，
+    // 只有上方 match 區塊中 allow 的路徑才能存取。
+    // =========================================================================
+  }
+}
