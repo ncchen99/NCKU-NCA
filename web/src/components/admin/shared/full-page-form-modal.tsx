@@ -4,6 +4,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
+import { AdminSpinnerLoading } from "./admin-loading-state";
 
 interface FullPageFormModalProps {
   open: boolean;
@@ -14,6 +15,7 @@ interface FullPageFormModalProps {
   submitLabel?: string;
   cancelLabel?: string;
   loading?: boolean;
+  isFetching?: boolean;
   wide?: boolean;
 }
 
@@ -26,6 +28,7 @@ export function FullPageFormModal({
   submitLabel = "儲存",
   cancelLabel = "取消",
   loading = false,
+  isFetching = false,
   wide = false,
 }: FullPageFormModalProps) {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -73,7 +76,13 @@ export function FullPageFormModal({
           className="flex min-h-0 flex-1 flex-col"
         >
           <div className="flex-1 overflow-y-auto px-6 py-5">
-            <div className="space-y-4">{children}</div>
+            {isFetching ? (
+              <div className="flex h-full min-h-[200px] items-center justify-center">
+                <AdminSpinnerLoading message="正在載入資料..." />
+              </div>
+            ) : (
+              <div className="space-y-4">{children}</div>
+            )}
           </div>
 
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-border px-6 py-4">

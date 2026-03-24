@@ -69,7 +69,7 @@
 - [x] 最新消息預覽 Section（3 欄 News Cards + mock data）
 - [x] 活動回顧預覽 Section（不對稱版型：1 Featured + 2 Small）
 - [x] Canvas Grid 裝飾線分隔
-- [ ] 點名橫幅整合（需接入 Auth Context 的登入狀態）
+- [x] 點名橫幅整合（需接入 Auth Context 的登入狀態）
 - [ ] RWD 響應式微調
 
 ### 2.2 關於我們 `/about`

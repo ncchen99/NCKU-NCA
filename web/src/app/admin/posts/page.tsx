@@ -26,6 +26,7 @@ import {
   type TabItem,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 type PostStatus = "all" | "published" | "draft";
 
@@ -134,18 +135,22 @@ export default function PostsPage() {
   // Toggle status loading
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
-  const fetchPosts = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchPosts = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const params = new URLSearchParams();
       if (activeTab !== "all") params.set("status", activeTab);
       const data = await adminFetch<{ posts: Post[] }>(`/api/admin/posts?${params}`);
       setPosts(data.posts ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入文章失敗");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "載入文章失敗");
+      } else {
+        toast(err instanceof Error ? err.message : "載入文章失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, [activeTab]);
 
@@ -241,7 +246,7 @@ export default function PostsPage() {
         tags: Array.isArray(full.tags) ? full.tags.join(", ") : "",
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入文章資料失敗");
+      toast(err instanceof Error ? err.message : "載入文章資料失敗", "error");
       setModalOpen(false);
     } finally {
       setModalLoading(false);
@@ -281,9 +286,10 @@ export default function PostsPage() {
       }
 
       setModalOpen(false);
-      await fetchPosts();
+      toast(editingId ? "文章已更新" : "文章已建立", "success");
+      await fetchPosts(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "儲存文章失敗");
+      toast(err instanceof Error ? err.message : "儲存文章失敗", "error");
     } finally {
       setModalLoading(false);
     }
@@ -297,9 +303,10 @@ export default function PostsPage() {
     try {
       await adminFetch(`/api/admin/posts/${deleteTarget.id}`, { method: "DELETE" });
       setDeleteTarget(null);
-      await fetchPosts();
+      toast("文章已刪除", "success");
+      await fetchPosts(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "刪除文章失敗");
+      toast(err instanceof Error ? err.message : "刪除文章失敗", "error");
       setDeleteTarget(null);
     } finally {
       setDeleteLoading(false);
@@ -318,9 +325,10 @@ export default function PostsPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: newStatus }),
         });
-        await fetchPosts();
+        toast(`已將狀態更改為 ${newStatus === "published" ? "已發布" : "草稿"}`, "success");
+        await fetchPosts(true);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "更新狀態失敗");
+        toast(err instanceof Error ? err.message : "更新狀態失敗", "error");
       } finally {
         setTogglingId(null);
       }
@@ -522,121 +530,124 @@ export default function PostsPage() {
         title={editingId ? "編輯文章" : "新增文章"}
         submitLabel={editingId ? "更新" : "建立"}
         loading={modalLoading}
+        isFetching={modalLoading && editingId !== null && Object.keys(formErrors).length === 0 && !form.title}
         wide
       >
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <FormField
-            label="標題"
-            required
-            value={form.title}
-            onChange={(e) => updateForm({ title: (e.target as HTMLInputElement).value })}
-            error={formErrors.title}
-            placeholder="輸入文章標題"
-          />
-          <FormField
-            label="Slug"
-            required
-            value={form.slug}
-            onChange={(e) => {
-              setSlugManuallyEdited(true);
-              setForm((prev) => ({ ...prev, slug: (e.target as HTMLInputElement).value }));
-            }}
-            error={formErrors.slug}
-            hint="URL 路徑，自動根據標題產生"
-          />
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <FormField
-            label="分類"
-            as="select"
-            value={form.category}
-            onChange={(e) => updateForm({ category: (e.target as HTMLSelectElement).value as PostForm["category"] })}
-            options={[
-              { value: "news", label: "最新消息" },
-              { value: "activity_review", label: "活動回顧" },
-            ]}
-          />
-          <FormField
-            label="狀態"
-            as="select"
-            value={form.status}
-            onChange={(e) => updateForm({ status: (e.target as HTMLSelectElement).value as PostForm["status"] })}
-            options={[
-              { value: "draft", label: "草稿" },
-              { value: "published", label: "已發布" },
-            ]}
-          />
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-neutral-700">
-              標籤
-            </label>
-            <div
-              ref={tagSuggestRootRef}
-              className="rounded-lg border border-border bg-white px-2 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
-            >
-              <div className="flex items-center gap-2">
-                <input
-                  value={form.tags}
-                  onChange={(e) => updateForm({ tags: (e.target as HTMLInputElement).value })}
-                  onFocus={() => setTagSuggestionsOpen(true)}
-                  placeholder="以逗號分隔，可自行輸入"
-                  className="w-full bg-transparent px-1 text-sm text-neutral-950 outline-none placeholder:text-neutral-400"
-                />
-                <button
-                  type="button"
-                  onClick={() => setTagSuggestionsOpen((prev) => !prev)}
-                  className="shrink-0 rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200"
-                >
-                  推薦標籤
-                </button>
-              </div>
-              {tagSuggestionsOpen && (
-                <div className="mt-2 border-t border-border/70 pt-2">
-                  <div className="mb-1 flex items-center justify-between gap-2 text-xs text-neutral-400">
-                    {tagStatsLoading && (
-                      <span className="shrink-0 text-neutral-400">載入中…</span>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {availableTagSuggestions.length === 0 ? (
-                      <span className="text-xs text-neutral-400">
-                        {tagStatsLoading
-                          ? "正在載入熱門標籤…"
-                          : "已加入所有推薦標籤"}
-                      </span>
-                    ) : (
-                      availableTagSuggestions.map((tag) => {
-                        const c = tagCountByName.get(tag);
-                        return (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => addTag(tag)}
-                            className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                          >
-                            {tag}
-                            {c != null && c > 0 && (
-                              <span className="font-normal text-primary/70">
-                                ×{c}
-                              </span>
-                            )}
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
-              )}
+        <>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <FormField
+                label="標題"
+                required
+                value={form.title}
+                onChange={(e) => updateForm({ title: (e.target as HTMLInputElement).value })}
+                error={formErrors.title}
+                placeholder="輸入文章標題"
+              />
+              <FormField
+                label="Slug"
+                required
+                value={form.slug}
+                onChange={(e) => {
+                  setSlugManuallyEdited(true);
+                  setForm((prev) => ({ ...prev, slug: (e.target as HTMLInputElement).value }));
+                }}
+                error={formErrors.slug}
+                hint="URL 路徑，自動根據標題產生"
+              />
             </div>
-            <p className="mt-1 text-xs text-neutral-400">
-              多個標籤請用逗號分隔，也可點上方推薦快速加入
-            </p>
-          </div>
-        </div>
-        <MarkdownEditor
-          value={form.content_markdown}
-          onChange={(v) => updateForm({ content_markdown: v })}
-        />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              <FormField
+                label="分類"
+                as="select"
+                value={form.category}
+                onChange={(e) => updateForm({ category: (e.target as HTMLSelectElement).value as PostForm["category"] })}
+                options={[
+                  { value: "news", label: "最新消息" },
+                  { value: "activity_review", label: "活動回顧" },
+                ]}
+              />
+              <FormField
+                label="狀態"
+                as="select"
+                value={form.status}
+                onChange={(e) => updateForm({ status: (e.target as HTMLSelectElement).value as PostForm["status"] })}
+                options={[
+                  { value: "draft", label: "草稿" },
+                  { value: "published", label: "已發布" },
+                ]}
+              />
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  標籤
+                </label>
+                <div
+                  ref={tagSuggestRootRef}
+                  className="rounded-lg border border-border bg-white px-2 py-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
+                >
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={form.tags}
+                      onChange={(e) => updateForm({ tags: (e.target as HTMLInputElement).value })}
+                      onFocus={() => setTagSuggestionsOpen(true)}
+                      placeholder="以逗號分隔，可自行輸入"
+                      className="w-full bg-transparent px-1 text-sm text-neutral-950 outline-none placeholder:text-neutral-400"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setTagSuggestionsOpen((prev) => !prev)}
+                      className="shrink-0 rounded-md bg-neutral-100 px-2 py-1 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200"
+                    >
+                      推薦標籤
+                    </button>
+                  </div>
+                  {tagSuggestionsOpen && (
+                    <div className="mt-2 border-t border-border/70 pt-2">
+                      <div className="mb-1 flex items-center justify-between gap-2 text-xs text-neutral-400">
+                        {tagStatsLoading && (
+                          <span className="shrink-0 text-neutral-400">載入中…</span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {availableTagSuggestions.length === 0 ? (
+                          <span className="text-xs text-neutral-400">
+                            {tagStatsLoading
+                              ? "正在載入熱門標籤…"
+                              : "已加入所有推薦標籤"}
+                          </span>
+                        ) : (
+                          availableTagSuggestions.map((tag) => {
+                            const c = tagCountByName.get(tag);
+                            return (
+                              <button
+                                key={tag}
+                                type="button"
+                                onClick={() => addTag(tag)}
+                                className="inline-flex items-center gap-1 rounded-full border border-primary/25 bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                              >
+                                {tag}
+                                {c != null && c > 0 && (
+                                  <span className="font-normal text-primary/70">
+                                    ×{c}
+                                  </span>
+                                )}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-neutral-400">
+                  多個標籤請用逗號分隔，也可點上方推薦快速加入
+                </p>
+              </div>
+            </div>
+            <MarkdownEditor
+              value={form.content_markdown}
+              onChange={(v) => updateForm({ content_markdown: v })}
+            />
+          </>
       </FullPageFormModal>
 
       {/* Delete Confirmation */}

@@ -34,6 +34,7 @@ import {
   adminFetch,
   timestampToMs,
 } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 type FilterStatus = "all" | "upcoming" | "open" | "closed";
 
@@ -145,9 +146,10 @@ export default function AttendancePage() {
   const [detailData, setDetailData] =
     useState<AttendanceEventDetailResponse | null>(null);
   const [detailEvent, setDetailEvent] = useState<EventWithStats | null>(null);
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+
+  const fetchEvents = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const { events: data } = await adminFetch<{
         events: AttendanceEvent[];
@@ -191,9 +193,13 @@ export default function AttendancePage() {
         }),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入點名活動失敗");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "載入點名活動失敗");
+      } else {
+        toast(err instanceof Error ? err.message : "載入點名活動失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -291,7 +297,8 @@ export default function AttendancePage() {
         });
       }
       setModalOpen(false);
-      await fetchEvents();
+      toast(editingEvent ? "點名活動更新成功" : "點名活動建立成功", "success");
+      await fetchEvents(true);
     } catch (err) {
       setFormError(err instanceof Error ? err.message : "操作失敗");
     } finally {

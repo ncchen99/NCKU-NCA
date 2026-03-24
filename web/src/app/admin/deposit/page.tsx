@@ -19,6 +19,7 @@ import {
   type TabItem,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 type DepositStatus = "all" | "pending_payment" | "paid" | "returned";
 
@@ -80,16 +81,20 @@ export default function DepositPage() {
   } | null>(null);
   const [notesLoading, setNotesLoading] = useState(false);
 
-  const fetchDeposits = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchDeposits = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const data = await adminFetch<DepositRecord[]>("/api/admin/deposits");
       setDeposits(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入資料時發生錯誤");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "載入資料時發生錯誤");
+      } else {
+        toast(err instanceof Error ? err.message : "載入資料失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -111,9 +116,10 @@ export default function DepositPage() {
         }),
       });
       setConfirmTarget(null);
-      await fetchDeposits();
+      toast("保證金狀態已更新", "success");
+      await fetchDeposits(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "操作失敗，請稍後再試");
+      toast(err instanceof Error ? err.message : "操作失敗，請稍後再試", "error");
     } finally {
       setConfirmLoading(false);
     }
@@ -134,9 +140,10 @@ export default function DepositPage() {
       });
       setBatchConfirm(null);
       setSelected(new Set());
-      await fetchDeposits();
+      toast("批次操作成功", "success");
+      await fetchDeposits(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "批次操作失敗");
+      toast(err instanceof Error ? err.message : "批次操作失敗", "error");
     } finally {
       setBatchLoading(false);
     }
@@ -156,9 +163,10 @@ export default function DepositPage() {
         }),
       });
       setNotesTarget(null);
-      await fetchDeposits();
+      toast("備註已更新", "success");
+      await fetchDeposits(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "備註更新失敗");
+      toast(err instanceof Error ? err.message : "備註更新失敗", "error");
     } finally {
       setNotesLoading(false);
     }

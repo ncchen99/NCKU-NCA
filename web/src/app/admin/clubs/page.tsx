@@ -25,6 +25,7 @@ import {
   type TabItem,
 } from "@/components/admin/shared";
 import { adminFetch } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 interface Club {
   id: string;
@@ -104,16 +105,20 @@ export default function ClubsPage() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchClubs = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchClubs = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const data = await adminFetch<{ clubs: Club[] }>("/api/admin/clubs");
       setClubs(data.clubs || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "發生未知錯誤");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "發生未知錯誤");
+      } else {
+        toast(err instanceof Error ? err.message : "載入社團失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -175,7 +180,8 @@ export default function ClubsPage() {
         }),
       });
       closeEdit();
-      await fetchClubs();
+      toast("社團儲存成功", "success");
+      await fetchClubs(true);
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "儲存失敗");
     } finally {
@@ -367,9 +373,11 @@ export default function ClubsPage() {
       );
       setImportResult(result);
       setImportStep("result");
-      await fetchClubs();
+      toast("社團名單匯入成功", "success");
+      await fetchClubs(true);
     } catch (err) {
       setImportError(err instanceof Error ? err.message : "匯入失敗");
+      toast(err instanceof Error ? err.message : "匯入失敗", "error");
     } finally {
       setImportLoading(false);
     }

@@ -156,6 +156,16 @@ export async function updatePost(
   try {
     const db = getAdminDb();
     const { id: _id, ...updateData } = data;
+
+    // 如果狀態設為「已發布」，且文章原本沒有發布時間，則補上發布時間
+    if (updateData.status === "published") {
+      const doc = await db.collection(COLLECTION).doc(id).get();
+      const existingData = doc.data();
+      if (!existingData?.published_at) {
+        (updateData as any).published_at = FieldValue.serverTimestamp();
+      }
+    }
+
     await db
       .collection(COLLECTION)
       .doc(id)

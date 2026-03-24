@@ -29,6 +29,7 @@ import {
 import { FormFieldEditor } from "@/components/admin/form-field-editor";
 import { FormTemplatePicker } from "@/components/admin/form-template-picker";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 import type { FormField as FormFieldType } from "@/types";
 import type { FormTemplate } from "@/lib/form-templates";
 
@@ -137,6 +138,7 @@ export default function FormsPage() {
   /* ── Modal State ── */
   const [modalOpen, setModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
+  const [formFetching, setFormFetching] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [editingForm, setEditingForm] = useState<Form | null>(null);
   const [draft, setDraft] = useState<FormDraft>(EMPTY_DRAFT);
@@ -151,9 +153,9 @@ export default function FormsPage() {
   /* ── Active tab for form modal ── */
   const [formModalTab, setFormModalTab] = useState<"basic" | "fields">("basic");
 
-  const fetchForms = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchForms = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const data = await adminFetch<Form[]>("/api/admin/forms");
 
@@ -175,9 +177,13 @@ export default function FormsPage() {
 
       setForms(formsWithCounts);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "載入資料時發生錯誤");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "載入資料時發生錯誤");
+      } else {
+        toast(err instanceof Error ? err.message : "載入資料失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -237,7 +243,7 @@ export default function FormsPage() {
     setFormModalTab("basic");
     setShowTemplatePicker(false);
     setModalOpen(true);
-    setModalLoading(true);
+    setFormFetching(true);
     try {
       const full = await adminFetch<Form>(`/api/admin/forms/${form.id}`);
       setEditingForm(full);
@@ -273,7 +279,7 @@ export default function FormsPage() {
     } catch (err) {
       setModalError(err instanceof Error ? err.message : "載入表單資料失敗");
     } finally {
-      setModalLoading(false);
+      setFormFetching(false);
     }
   }, []);
 
@@ -345,7 +351,8 @@ export default function FormsPage() {
 
       setModalOpen(false);
       setEditingForm(null);
-      await fetchForms();
+      toast(editingForm ? "表單已更新" : "表單已建立", "success");
+      await fetchForms(true);
     } catch (err) {
       setModalError(err instanceof Error ? err.message : "操作失敗");
     } finally {
@@ -361,9 +368,10 @@ export default function FormsPage() {
         method: "DELETE",
       });
       setDeleteTarget(null);
-      await fetchForms();
+      toast("表單已刪除", "success");
+      await fetchForms(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "刪除失敗");
+      toast(err instanceof Error ? err.message : "刪除失敗", "error");
     } finally {
       setDeleteLoading(false);
     }
@@ -554,6 +562,7 @@ export default function FormsPage() {
         title={editingForm ? "編輯表單" : "建立表單"}
         submitLabel={editingForm ? "更新" : "建立"}
         loading={modalLoading}
+        isFetching={formFetching}
         wide
       >
         {modalError && <AdminErrorBanner message={modalError} />}

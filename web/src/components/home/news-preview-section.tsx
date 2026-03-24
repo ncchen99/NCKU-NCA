@@ -35,7 +35,8 @@ async function NewsPreviewSection() {
         cover_image_url: p.cover_image_url || null,
       };
     });
-  } catch {
+  } catch (error) {
+    console.error("NewsPreviewSection: Failed to fetch from Firestore:", error);
     /* Firestore 未連線或無資料時使用空列表 */
   }
 

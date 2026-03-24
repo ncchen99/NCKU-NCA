@@ -14,6 +14,7 @@ import {
   AdminErrorBanner,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 interface SiteContent {
   id: string;
@@ -49,18 +50,22 @@ export default function ContentPage() {
   const [editError, setEditError] = useState<string | null>(null);
   const [successId, setSuccessId] = useState<string | null>(null);
 
-  const fetchContent = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchContent = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const data = await adminFetch<{ content: SiteContent[] }>(
         "/api/admin/content",
       );
       setPages(data.content || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "無法載入內容資料");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "無法載入內容資料");
+      } else {
+        toast(err instanceof Error ? err.message : "載入內容失敗", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -99,7 +104,8 @@ export default function ContentPage() {
       setEditTarget(null);
       setSuccessId(pageId);
       setTimeout(() => setSuccessId(null), 2500);
-      await fetchContent();
+      toast("頁面內容已儲存", "success");
+      await fetchContent(true);
     } catch (err) {
       setEditError(err instanceof Error ? err.message : "儲存失敗，請稍後再試");
     } finally {

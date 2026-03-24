@@ -10,6 +10,7 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
+import { AppSelect } from "@/components/ui/app-select";
 import type { FormField as FormFieldType, DependsOn } from "@/types";
 
 /* ─── Constants ─── */
@@ -110,17 +111,12 @@ function InlineSelect({
   className?: string;
 }) {
   return (
-    <select
+    <AppSelect
       value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${selectBase} ${className}`}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+      onChange={onChange}
+      options={options}
+      className={className}
+    />
   );
 }
 

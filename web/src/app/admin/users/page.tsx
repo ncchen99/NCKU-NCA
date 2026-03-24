@@ -18,6 +18,7 @@ import {
   type TabItem,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
+import { toast } from "@/components/ui/use-toast";
 
 type RoleTab = "all" | "admin" | "club_member";
 
@@ -70,16 +71,20 @@ export default function UsersPage() {
   } | null>(null);
   const [clubLoading, setClubLoading] = useState(false);
 
-  const fetchUsers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const fetchUsers = useCallback(async (background = false) => {
+    if (!background) setLoading(true);
+    if (!background) setError(null);
     try {
       const data = await adminFetch<{ users: User[] }>("/api/admin/users");
       setUsers(data.users || []);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "無法載入用戶資料");
+      if (!background) {
+        setError(err instanceof Error ? err.message : "無法載入用戶資料");
+      } else {
+        toast(err instanceof Error ? err.message : "無法載入用戶資料", "error");
+      }
     } finally {
-      setLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
@@ -110,9 +115,10 @@ export default function UsersPage() {
         body: JSON.stringify({ uid: roleTarget.uid, role: roleTarget.newRole }),
       });
       setRoleTarget(null);
-      await fetchUsers();
+      toast("變更角色成功", "success");
+      await fetchUsers(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "角色更新失敗，請稍後再試");
+      toast(err instanceof Error ? err.message : "角色更新失敗，請稍後再試", "error");
     } finally {
       setRoleLoading(false);
     }
@@ -140,9 +146,10 @@ export default function UsersPage() {
         }),
       });
       setClubTarget(null);
-      await fetchUsers();
+      toast("社團關聯更新成功", "success");
+      await fetchUsers(true);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "社團關聯更新失敗");
+      toast(err instanceof Error ? err.message : "社團關聯更新失敗", "error");
     } finally {
       setClubLoading(false);
     }
