@@ -1,45 +1,116 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   PlusIcon,
-  MagnifyingGlassIcon,
   EyeIcon,
+  PencilSquareIcon,
+  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  AdminPageHeader,
+  AdminFilterBar,
+  AdminTableSkeleton,
+  AdminErrorState,
+  AdminEmptyState,
+  AdminErrorBanner,
+  FormModal,
+  FormField,
+  ConfirmDialog,
+  type TabItem,
+} from "@/components/admin/shared";
+import { formatTimestamp, adminFetch } from "@/lib/admin-utils";
 
 type FormStatus = "all" | "open" | "closed" | "draft";
 
-interface MockForm {
+interface FormFieldDef {
   id: string;
-  title: string;
+  label: string;
   type: string;
-  status: "open" | "closed" | "draft";
-  responses: number;
-  createdAt: string;
-  closesAt: string;
+  required?: boolean;
 }
 
-const mockForms: MockForm[] = [
-  { id: "1", title: "113-2 社團博覽會報名", type: "博覽會報名", status: "open", responses: 85, createdAt: "2026-02-20", closesAt: "2026-04-01" },
-  { id: "2", title: "寒假聯合會報名表", type: "寒聯會報名", status: "open", responses: 42, createdAt: "2026-01-10", closesAt: "2026-03-30" },
-  { id: "3", title: "社團幹部調查", type: "自訂表單", status: "open", responses: 60, createdAt: "2026-02-15", closesAt: "2026-04-15" },
-  { id: "4", title: "112-2 社團博覽會報名", type: "博覽會報名", status: "closed", responses: 110, createdAt: "2025-09-01", closesAt: "2025-10-01" },
-  { id: "5", title: "社團空間申請", type: "自訂表單", status: "draft", responses: 0, createdAt: "2026-03-10", closesAt: "" },
-  { id: "6", title: "校慶活動意願調查", type: "自訂表單", status: "closed", responses: 78, createdAt: "2025-11-01", closesAt: "2025-11-20" },
+interface DepositPolicy {
+  required: boolean;
+  amount?: number;
+  binding_mode: "linked_to_response" | "independent";
+  refund_rule?: string;
+}
+
+interface Form {
+  id: string;
+  title: string;
+  description: string;
+  form_type:
+    | "expo_registration"
+    | "winter_association_registration"
+    | "general_registration"
+    | "attendance_survey"
+    | "custom";
+  status: "draft" | "open" | "closed";
+  settings: Record<string, unknown>;
+  deposit_policy: DepositPolicy;
+  fields: FormFieldDef[];
+  created_by: string;
+  created_at: unknown;
+  closes_at?: unknown;
+  responseCount?: number;
+}
+
+interface FormDraft {
+  title: string;
+  description: string;
+  form_type: Form["form_type"];
+  status: Form["status"];
+  deposit_required: boolean;
+  deposit_amount: string;
+  closes_at: string;
+}
+
+const EMPTY_DRAFT: FormDraft = {
+  title: "",
+  description: "",
+  form_type: "general_registration",
+  status: "draft",
+  deposit_required: false,
+  deposit_amount: "",
+  closes_at: "",
+};
+
+const formTypeLabels: Record<string, string> = {
+  expo_registration: "博覽會報名",
+  winter_association_registration: "寒聯會報名",
+  general_registration: "一般報名",
+  attendance_survey: "出席調查",
+  custom: "自訂表單",
+};
+
+const formTypeOptions = Object.entries(formTypeLabels).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+const statusOptions = [
+  { value: "draft", label: "草稿" },
+  { value: "open", label: "開放中" },
+  { value: "closed", label: "已關閉" },
 ];
 
-const tabs: { key: FormStatus; label: string }[] = [
+const tabs: TabItem<FormStatus>[] = [
   { key: "all", label: "全部" },
   { key: "open", label: "開放中" },
   { key: "closed", label: "已關閉" },
   { key: "draft", label: "草稿" },
 ];
 
-const statusConfig: Record<string, { variant: "success" | "neutral" | "warning"; label: string }> = {
+const statusConfig: Record<
+  string,
+  { variant: "success" | "neutral" | "warning"; label: string }
+> = {
   open: { variant: "success", label: "開放中" },
   closed: { variant: "neutral", label: "已關閉" },
   draft: { variant: "warning", label: "草稿" },
@@ -48,106 +119,402 @@ const statusConfig: Record<string, { variant: "success" | "neutral" | "warning";
 export default function FormsPage() {
   const [activeTab, setActiveTab] = useState<FormStatus>("all");
   const [search, setSearch] = useState("");
+  const [forms, setForms] = useState<Form[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = mockForms.filter((f) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [editingForm, setEditingForm] = useState<Form | null>(null);
+  const [draft, setDraft] = useState<FormDraft>(EMPTY_DRAFT);
+
+  const [deleteTarget, setDeleteTarget] = useState<Form | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const fetchForms = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await adminFetch<Form[]>("/api/admin/forms");
+
+      const formsWithCounts = await Promise.all(
+        data.map(async (form) => {
+          try {
+            const responses = await adminFetch<unknown[]>(
+              `/api/admin/forms/${form.id}/responses`,
+            );
+            return {
+              ...form,
+              responseCount: Array.isArray(responses) ? responses.length : 0,
+            };
+          } catch {
+            return { ...form, responseCount: 0 };
+          }
+        }),
+      );
+
+      setForms(formsWithCounts);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "載入資料時發生錯誤");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchForms();
+  }, [fetchForms]);
+
+  const filtered = forms.filter((f) => {
     if (activeTab !== "all" && f.status !== activeTab) return false;
     if (search && !f.title.includes(search)) return false;
     return true;
   });
 
+  function openCreateModal() {
+    setEditingForm(null);
+    setDraft(EMPTY_DRAFT);
+    setModalError(null);
+    setModalOpen(true);
+  }
+
+  async function openEditModal(form: Form) {
+    setModalError(null);
+    setModalOpen(true);
+    setModalLoading(true);
+    try {
+      const full = await adminFetch<Form>(`/api/admin/forms/${form.id}`);
+      setEditingForm(full);
+      setDraft({
+        title: full.title,
+        description: full.description ?? "",
+        form_type: full.form_type,
+        status: full.status,
+        deposit_required: full.deposit_policy?.required ?? false,
+        deposit_amount: full.deposit_policy?.amount?.toString() ?? "",
+        closes_at: closesAtToInput(full.closes_at),
+      });
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : "載入表單資料失敗");
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  function closesAtToInput(ts: unknown): string {
+    if (!ts) return "";
+    if (typeof ts === "string") {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().slice(0, 16);
+    }
+    if (
+      typeof ts === "object" &&
+      ts !== null &&
+      "_seconds" in (ts as Record<string, unknown>)
+    ) {
+      const d = new Date(
+        (ts as { _seconds: number })._seconds * 1000,
+      );
+      return d.toISOString().slice(0, 16);
+    }
+    return "";
+  }
+
+  async function handleSubmit() {
+    if (!draft.title.trim()) return;
+    setModalLoading(true);
+    setModalError(null);
+    try {
+      const body: Record<string, unknown> = {
+        title: draft.title.trim(),
+        description: draft.description.trim(),
+        form_type: draft.form_type,
+        status: draft.status,
+        deposit_policy: {
+          required: draft.deposit_required,
+          ...(draft.deposit_required && draft.deposit_amount
+            ? { amount: Number(draft.deposit_amount) }
+            : {}),
+          binding_mode: editingForm?.deposit_policy?.binding_mode ?? "independent",
+        },
+        ...(draft.closes_at ? { closes_at: draft.closes_at } : {}),
+      };
+
+      if (editingForm) {
+        await adminFetch(`/api/admin/forms/${editingForm.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      } else {
+        await adminFetch<{ id: string }>("/api/admin/forms", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+      }
+
+      setModalOpen(false);
+      setEditingForm(null);
+      await fetchForms();
+    } catch (err) {
+      setModalError(err instanceof Error ? err.message : "操作失敗");
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await adminFetch(`/api/admin/forms/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      setDeleteTarget(null);
+      await fetchForms();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "刪除失敗");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  function updateDraft(patch: Partial<FormDraft>) {
+    setDraft((prev) => ({ ...prev, ...patch }));
+  }
+
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-950">
-          表單管理
-        </h1>
-        <Button>
-          <PlusIcon className="h-4 w-4" />
-          建立表單
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="表單管理"
+        count={loading ? undefined : forms.length}
+        action={
+          <Button onClick={openCreateModal}>
+            <PlusIcon className="h-4 w-4" />
+            建立表單
+          </Button>
+        }
+      />
+
+      {error && !loading && <AdminErrorBanner message={error} />}
 
       <Card className="mt-6">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 pt-4 pb-3">
-          <div className="flex gap-1">
-            {tabs.map((t) => (
-              <Button
-                key={t.key}
-                variant="pill"
-                size="sm"
-                active={activeTab === t.key}
-                onClick={() => setActiveTab(t.key)}
-              >
-                {t.label}
-              </Button>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5">
-            <MagnifyingGlassIcon className="h-4 w-4 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="搜尋表單..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-44 bg-transparent text-[13px] outline-none placeholder:text-neutral-400"
-            />
-          </div>
-        </div>
+        <AdminFilterBar<FormStatus>
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="搜尋表單..."
+        />
 
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="bg-neutral-100 text-neutral-500">
-              <th className="h-10 px-5 font-medium">表單名稱</th>
-              <th className="h-10 px-3 font-medium">類型</th>
-              <th className="h-10 px-3 font-medium">狀態</th>
-              <th className="h-10 px-3 font-medium">回覆數</th>
-              <th className="h-10 px-3 font-medium">截止日期</th>
-              <th className="h-10 px-5 text-right font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((form) => {
-              const badge = statusConfig[form.status];
-              return (
-                <tr
-                  key={form.id}
-                  className="border-b border-border/50 last:border-0 hover:bg-primary/5"
-                >
-                  <td className="h-12 px-5 font-medium text-neutral-950">
-                    {form.title}
-                  </td>
-                  <td className="h-12 px-3 text-neutral-600">{form.type}</td>
-                  <td className="h-12 px-3">
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </td>
-                  <td className="h-12 px-3 font-mono text-neutral-600">
-                    {form.responses}
-                  </td>
-                  <td className="h-12 px-3 text-neutral-400">
-                    {form.closesAt || "—"}
-                  </td>
-                  <td className="h-12 px-5 text-right">
-                    <Link
-                      href={`/admin/forms/${form.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      <EyeIcon className="h-3.5 w-3.5" />
-                      檢視
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="h-32 text-center text-sm text-neutral-400">
-                  沒有找到符合條件的表單
-                </td>
+        {loading ? (
+          <AdminTableSkeleton rows={5} columns={[192, 80, 56, 48, 80, 64]} />
+        ) : error ? (
+          <AdminErrorState message={error} onRetry={fetchForms} />
+        ) : (
+          <table className="w-full text-left text-[13px]">
+            <thead>
+              <tr className="bg-neutral-100 text-neutral-500">
+                <th className="h-10 px-5 font-medium">表單名稱</th>
+                <th className="h-10 px-3 font-medium">類型</th>
+                <th className="h-10 px-3 font-medium">狀態</th>
+                <th className="h-10 px-3 font-medium">回覆數</th>
+                <th className="h-10 px-3 font-medium">截止日期</th>
+                <th className="h-10 px-5 text-right font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((form) => {
+                const badge = statusConfig[form.status];
+                return (
+                  <tr
+                    key={form.id}
+                    className="border-b border-border/50 last:border-0 hover:bg-primary/5"
+                  >
+                    <td className="h-12 px-5 font-medium text-neutral-950">
+                      {form.title}
+                    </td>
+                    <td className="h-12 px-3 text-neutral-600">
+                      {formTypeLabels[form.form_type] ?? form.form_type}
+                    </td>
+                    <td className="h-12 px-3">
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                    </td>
+                    <td className="h-12 px-3 font-mono text-neutral-600">
+                      {form.responseCount ?? 0}
+                    </td>
+                    <td className="h-12 px-3 text-neutral-400">
+                      {formatTimestamp(
+                        form.closes_at as Parameters<typeof formatTimestamp>[0],
+                      )}
+                    </td>
+                    <td className="h-12 px-5 text-right">
+                      <div className="inline-flex items-center gap-3">
+                        <Link
+                          href={`/admin/forms/${form.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <EyeIcon className="h-3.5 w-3.5" />
+                          檢視
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(form)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                        >
+                          <PencilSquareIcon className="h-3.5 w-3.5" />
+                          編輯
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget(form)}
+                          className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 hover:underline"
+                        >
+                          <TrashIcon className="h-3.5 w-3.5" />
+                          刪除
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <AdminEmptyState
+                  message="沒有找到符合條件的表單"
+                  colSpan={6}
+                />
+              )}
+            </tbody>
+          </table>
+        )}
       </Card>
+
+      {/* Create / Edit Modal */}
+      <FormModal
+        open={modalOpen}
+        onClose={() => {
+          setModalOpen(false);
+          setEditingForm(null);
+        }}
+        onSubmit={handleSubmit}
+        title={editingForm ? "編輯表單" : "建立表單"}
+        submitLabel={editingForm ? "更新" : "建立"}
+        loading={modalLoading}
+      >
+        {modalError && <AdminErrorBanner message={modalError} />}
+
+        <FormField
+          label="表單名稱"
+          required
+          value={draft.title}
+          onChange={(e) =>
+            updateDraft({
+              title: (e.target as HTMLInputElement).value,
+            })
+          }
+          placeholder="請輸入表單名稱"
+        />
+
+        <FormField
+          as="textarea"
+          label="描述"
+          value={draft.description}
+          onChange={(e) =>
+            updateDraft({
+              description: (e.target as HTMLTextAreaElement).value,
+            })
+          }
+          placeholder="表單說明（選填）"
+        />
+
+        <FormField
+          as="select"
+          label="表單類型"
+          required
+          value={draft.form_type}
+          onChange={(e) =>
+            updateDraft({
+              form_type: (e.target as HTMLSelectElement)
+                .value as Form["form_type"],
+            })
+          }
+          options={formTypeOptions}
+        />
+
+        <FormField
+          as="select"
+          label="狀態"
+          required
+          value={draft.status}
+          onChange={(e) =>
+            updateDraft({
+              status: (e.target as HTMLSelectElement)
+                .value as Form["status"],
+            })
+          }
+          options={statusOptions}
+        />
+
+        <FormField
+          as="select"
+          label="需要保證金"
+          value={draft.deposit_required ? "yes" : "no"}
+          onChange={(e) =>
+            updateDraft({
+              deposit_required:
+                (e.target as HTMLSelectElement).value === "yes",
+            })
+          }
+          options={[
+            { value: "no", label: "否" },
+            { value: "yes", label: "是" },
+          ]}
+        />
+
+        {draft.deposit_required && (
+          <FormField
+            label="保證金金額"
+            type="number"
+            min={0}
+            value={draft.deposit_amount}
+            onChange={(e) =>
+              updateDraft({
+                deposit_amount: (e.target as HTMLInputElement).value,
+              })
+            }
+            placeholder="輸入金額"
+            hint="單位：新台幣"
+          />
+        )}
+
+        <FormField
+          label="截止時間"
+          type="datetime-local"
+          value={draft.closes_at}
+          onChange={(e) =>
+            updateDraft({
+              closes_at: (e.target as HTMLInputElement).value,
+            })
+          }
+          hint="留空表示無截止日期"
+        />
+      </FormModal>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={`確定要刪除「${deleteTarget?.title}」嗎？`}
+        description="此操作無法復原，表單及其所有回覆資料將被永久刪除。"
+        confirmLabel="刪除"
+        variant="danger"
+        loading={deleteLoading}
+      />
     </>
   );
 }

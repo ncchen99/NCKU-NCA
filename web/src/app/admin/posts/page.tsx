@@ -1,148 +1,452 @@
 "use client";
 
-import { useState } from "react";
-import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import {
   PlusIcon,
-  MagnifyingGlassIcon,
   PencilSquareIcon,
+  TrashIcon,
+  ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  AdminPageHeader,
+  AdminFilterBar,
+  AdminTableSkeleton,
+  AdminEmptyState,
+  AdminErrorBanner,
+  FormModal,
+  FormField,
+  ConfirmDialog,
+  type TabItem,
+} from "@/components/admin/shared";
+import { formatTimestamp, adminFetch } from "@/lib/admin-utils";
 
 type PostStatus = "all" | "published" | "draft";
 
-interface MockPost {
+interface Post {
   id: string;
   title: string;
-  category: string;
-  status: "published" | "draft";
-  author: string;
-  date: string;
+  slug: string;
+  category: "news" | "activity_review";
+  cover_image_url: string;
+  content_markdown: string;
+  tags: string[];
+  status: "draft" | "published";
+  published_at: unknown;
+  updated_at: unknown;
+  author_uid: string;
 }
 
-const mockPosts: MockPost[] = [
-  { id: "1", title: "113學年度社團博覽會圓滿落幕", category: "最新消息", status: "published", author: "管理員", date: "2026-03-20" },
-  { id: "2", title: "寒假聯合會活動回顧", category: "活動回顧", status: "published", author: "管理員", date: "2026-03-15" },
-  { id: "3", title: "社團幹部交接須知", category: "最新消息", status: "draft", author: "管理員", date: "2026-03-12" },
-  { id: "4", title: "114學年度社團評鑑公告", category: "最新消息", status: "published", author: "管理員", date: "2026-03-10" },
-  { id: "5", title: "社團空間使用規範更新", category: "最新消息", status: "draft", author: "管理員", date: "2026-03-08" },
-  { id: "6", title: "校慶活動社團表演報名", category: "活動回顧", status: "published", author: "管理員", date: "2026-03-05" },
-];
+interface PostForm {
+  title: string;
+  slug: string;
+  category: "news" | "activity_review";
+  status: "draft" | "published";
+  content_markdown: string;
+  tags: string;
+}
 
-const tabs: { key: PostStatus; label: string }[] = [
+const EMPTY_FORM: PostForm = {
+  title: "",
+  slug: "",
+  category: "news",
+  status: "draft",
+  content_markdown: "",
+  tags: "",
+};
+
+const tabs: TabItem<PostStatus>[] = [
   { key: "all", label: "全部" },
   { key: "published", label: "已發布" },
   { key: "draft", label: "草稿" },
 ];
+
+const categoryMap: Record<string, string> = {
+  news: "最新消息",
+  activity_review: "活動回顧",
+};
 
 const statusBadge: Record<string, { variant: "success" | "neutral"; label: string }> = {
   published: { variant: "success", label: "已發布" },
   draft: { variant: "neutral", label: "草稿" },
 };
 
+function toSlug(title: string): string {
+  return title
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s\u4e00-\u9fff-]/g, "")
+    .replace(/\s+/g, "-");
+}
+
 export default function PostsPage() {
   const [activeTab, setActiveTab] = useState<PostStatus>("all");
   const [search, setSearch] = useState("");
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = mockPosts.filter((p) => {
-    if (activeTab !== "all" && p.status !== activeTab) return false;
-    if (search && !p.title.includes(search)) return false;
-    return true;
+  // Modal state
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState<PostForm>(EMPTY_FORM);
+  const [formErrors, setFormErrors] = useState<Partial<Record<keyof PostForm, string>>>({});
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
+
+  // Delete state
+  const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Toggle status loading
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  const fetchPosts = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams();
+      if (activeTab !== "all") params.set("status", activeTab);
+      const data = await adminFetch<{ posts: Post[] }>(`/api/admin/posts?${params}`);
+      setPosts(data.posts ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "載入文章失敗");
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
+
+  const filtered = posts.filter((p) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return p.title.toLowerCase().includes(q) || p.slug.toLowerCase().includes(q);
   });
+
+  // --- Form helpers ---
+
+  function updateForm(patch: Partial<PostForm>) {
+    setForm((prev) => {
+      const next = { ...prev, ...patch };
+      if ("title" in patch && !slugManuallyEdited) {
+        next.slug = toSlug(patch.title!);
+      }
+      return next;
+    });
+  }
+
+  function validate(): boolean {
+    const errors: Partial<Record<keyof PostForm, string>> = {};
+    if (!form.title.trim()) errors.title = "標題為必填";
+    if (!form.slug.trim()) errors.slug = "Slug 為必填";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  // --- Create ---
+
+  function openCreate() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setFormErrors({});
+    setSlugManuallyEdited(false);
+    setModalOpen(true);
+  }
+
+  // --- Edit ---
+
+  async function openEdit(post: Post) {
+    setEditingId(post.id);
+    setFormErrors({});
+    setSlugManuallyEdited(true);
+    setModalLoading(true);
+    setModalOpen(true);
+
+    try {
+      const full = await adminFetch<Post>(`/api/admin/posts/${post.id}`);
+      setForm({
+        title: full.title,
+        slug: full.slug,
+        category: full.category,
+        status: full.status,
+        content_markdown: full.content_markdown ?? "",
+        tags: Array.isArray(full.tags) ? full.tags.join(", ") : "",
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "載入文章資料失敗");
+      setModalOpen(false);
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  // --- Submit (create or edit) ---
+
+  async function handleSubmit() {
+    if (!validate()) return;
+    setModalLoading(true);
+    try {
+      const payload = {
+        title: form.title.trim(),
+        slug: form.slug.trim(),
+        category: form.category,
+        status: form.status,
+        content_markdown: form.content_markdown,
+        tags: form.tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      };
+
+      if (editingId) {
+        await adminFetch(`/api/admin/posts/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await adminFetch("/api/admin/posts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+      }
+
+      setModalOpen(false);
+      await fetchPosts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "儲存文章失敗");
+    } finally {
+      setModalLoading(false);
+    }
+  }
+
+  // --- Delete ---
+
+  async function handleDelete() {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    try {
+      await adminFetch(`/api/admin/posts/${deleteTarget.id}`, { method: "DELETE" });
+      setDeleteTarget(null);
+      await fetchPosts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "刪除文章失敗");
+      setDeleteTarget(null);
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  // --- Toggle status ---
+
+  async function handleToggleStatus(post: Post) {
+    const newStatus = post.status === "published" ? "draft" : "published";
+    setTogglingId(post.id);
+    try {
+      await adminFetch(`/api/admin/posts/${post.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      await fetchPosts();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "更新狀態失敗");
+    } finally {
+      setTogglingId(null);
+    }
+  }
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-950">
-          文章管理
-        </h1>
-        <Button>
-          <PlusIcon className="h-4 w-4" />
-          新增文章
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="文章管理"
+        count={posts.length}
+        action={
+          <Button onClick={openCreate}>
+            <PlusIcon className="h-4 w-4" />
+            新增文章
+          </Button>
+        }
+      />
+
+      {error && <AdminErrorBanner message={error} />}
 
       <Card className="mt-6">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 pt-4 pb-3">
-          <div className="flex gap-1">
-            {tabs.map((t) => (
-              <Button
-                key={t.key}
-                variant="pill"
-                size="sm"
-                active={activeTab === t.key}
-                onClick={() => setActiveTab(t.key)}
-              >
-                {t.label}
-              </Button>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5">
-            <MagnifyingGlassIcon className="h-4 w-4 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="搜尋文章..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-44 bg-transparent text-[13px] outline-none placeholder:text-neutral-400"
-            />
-          </div>
-        </div>
+        <AdminFilterBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="搜尋文章..."
+        />
 
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="bg-neutral-100 text-neutral-500">
-              <th className="h-10 px-5 font-medium">標題</th>
-              <th className="h-10 px-3 font-medium">分類</th>
-              <th className="h-10 px-3 font-medium">狀態</th>
-              <th className="h-10 px-3 font-medium">作者</th>
-              <th className="h-10 px-3 font-medium">日期</th>
-              <th className="h-10 px-5 text-right font-medium" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((post) => {
-              const badge = statusBadge[post.status];
-              return (
-                <tr
-                  key={post.id}
-                  className="border-b border-border/50 last:border-0 hover:bg-primary/5"
-                >
-                  <td className="h-12 px-5 font-medium text-neutral-950">
-                    {post.title}
-                  </td>
-                  <td className="h-12 px-3 text-neutral-600">
-                    {post.category}
-                  </td>
-                  <td className="h-12 px-3">
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </td>
-                  <td className="h-12 px-3 text-neutral-600">{post.author}</td>
-                  <td className="h-12 px-3 text-neutral-400">{post.date}</td>
-                  <td className="h-12 px-5 text-right">
-                    <Link
-                      href={`/admin/posts/${post.id}`}
-                      className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-                    >
-                      <PencilSquareIcon className="h-3.5 w-3.5" />
-                      編輯
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={6} className="h-32 text-center text-sm text-neutral-400">
-                  沒有找到符合條件的文章
-                </td>
+        {loading ? (
+          <AdminTableSkeleton rows={5} columns={[192, 64, 56, 80, 80]} />
+        ) : (
+          <table className="w-full text-left text-[13px]">
+            <thead>
+              <tr className="bg-neutral-100 text-neutral-500">
+                <th className="h-10 px-5 font-medium">標題</th>
+                <th className="h-10 px-3 font-medium">分類</th>
+                <th className="h-10 px-3 font-medium">狀態</th>
+                <th className="h-10 px-3 font-medium">作者</th>
+                <th className="h-10 px-3 font-medium">日期</th>
+                <th className="h-10 px-5 text-right font-medium" />
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <AdminEmptyState message="沒有找到符合條件的文章" colSpan={6} />
+              ) : (
+                filtered.map((post) => {
+                  const badge = statusBadge[post.status] ?? statusBadge.draft;
+                  const displayDate =
+                    post.status === "published"
+                      ? formatTimestamp(post.published_at as Parameters<typeof formatTimestamp>[0])
+                      : formatTimestamp(post.updated_at as Parameters<typeof formatTimestamp>[0]);
+                  return (
+                    <tr
+                      key={post.id}
+                      className="border-b border-border/50 last:border-0 hover:bg-primary/5"
+                    >
+                      <td className="h-12 px-5 font-medium text-neutral-950">
+                        {post.title}
+                      </td>
+                      <td className="h-12 px-3 text-neutral-600">
+                        {categoryMap[post.category] ?? post.category}
+                      </td>
+                      <td className="h-12 px-3">
+                        <Badge variant={badge.variant}>{badge.label}</Badge>
+                      </td>
+                      <td className="h-12 px-3 text-neutral-600">
+                        {post.author_uid ?? "—"}
+                      </td>
+                      <td className="h-12 px-3 text-neutral-400">{displayDate}</td>
+                      <td className="h-12 px-5 text-right">
+                        <div className="inline-flex items-center gap-3">
+                          <button
+                            type="button"
+                            disabled={togglingId === post.id}
+                            onClick={() => handleToggleStatus(post)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-neutral-500 hover:text-neutral-700 hover:underline disabled:opacity-50"
+                          >
+                            <ArrowPathIcon className="h-3.5 w-3.5" />
+                            {togglingId === post.id
+                              ? "更新中…"
+                              : post.status === "published"
+                                ? "轉為草稿"
+                                : "發布"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openEdit(post)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                          >
+                            <PencilSquareIcon className="h-3.5 w-3.5" />
+                            編輯
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(post)}
+                            className="inline-flex items-center gap-1 text-xs font-medium text-red-500 hover:text-red-700 hover:underline"
+                          >
+                            <TrashIcon className="h-3.5 w-3.5" />
+                            刪除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        )}
       </Card>
+
+      {/* Create / Edit Modal */}
+      <FormModal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSubmit={handleSubmit}
+        title={editingId ? "編輯文章" : "新增文章"}
+        submitLabel={editingId ? "更新" : "建立"}
+        loading={modalLoading}
+      >
+        <FormField
+          label="標題"
+          required
+          value={form.title}
+          onChange={(e) => updateForm({ title: (e.target as HTMLInputElement).value })}
+          error={formErrors.title}
+          placeholder="輸入文章標題"
+        />
+        <FormField
+          label="Slug"
+          required
+          value={form.slug}
+          onChange={(e) => {
+            setSlugManuallyEdited(true);
+            setForm((prev) => ({ ...prev, slug: (e.target as HTMLInputElement).value }));
+          }}
+          error={formErrors.slug}
+          hint="URL 路徑，自動根據標題產生"
+        />
+        <FormField
+          label="分類"
+          as="select"
+          value={form.category}
+          onChange={(e) => updateForm({ category: (e.target as HTMLSelectElement).value as PostForm["category"] })}
+          options={[
+            { value: "news", label: "最新消息" },
+            { value: "activity_review", label: "活動回顧" },
+          ]}
+        />
+        <FormField
+          label="狀態"
+          as="select"
+          value={form.status}
+          onChange={(e) => updateForm({ status: (e.target as HTMLSelectElement).value as PostForm["status"] })}
+          options={[
+            { value: "draft", label: "草稿" },
+            { value: "published", label: "已發布" },
+          ]}
+        />
+        <FormField
+          label="內容 (Markdown)"
+          as="textarea"
+          rows={6}
+          value={form.content_markdown}
+          onChange={(e) => updateForm({ content_markdown: (e.target as HTMLTextAreaElement).value })}
+          placeholder="使用 Markdown 撰寫文章內容…"
+        />
+        <FormField
+          label="標籤"
+          value={form.tags}
+          onChange={(e) => updateForm({ tags: (e.target as HTMLInputElement).value })}
+          placeholder="以逗號分隔，例如：活動, 社團, 公告"
+          hint="多個標籤請用逗號分隔"
+        />
+      </FormModal>
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title={`刪除「${deleteTarget?.title ?? ""}」`}
+        description="此操作無法復原，確定要刪除這篇文章嗎？"
+        confirmLabel="刪除"
+        variant="danger"
+        loading={deleteLoading}
+      />
     </>
   );
 }

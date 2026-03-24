@@ -2,11 +2,15 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
+  Cog6ToothIcon,
+  ArrowRightStartOnRectangleIcon,
 } from "@heroicons/react/24/outline";
+import { useAuth } from "@/lib/auth-context";
 
 const NAV_LINKS = [
   { label: "關於我們", href: "/about" },
@@ -16,34 +20,38 @@ const NAV_LINKS = [
   { label: "活動回顧", href: "/activities" },
 ];
 
-interface NavbarProps {
-  isLoggedIn?: boolean;
-  userName?: string;
-  hasActiveEvent?: boolean;
-  openForms?: { id: string; title: string }[];
-}
-
-export function Navbar({
-  isLoggedIn = false,
-  userName = "",
-  hasActiveEvent = false,
-  openForms = [],
-}: NavbarProps) {
+export function Navbar() {
+  const { user, firebaseUser, loading, signOut } = useAuth();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [formsOpen, setFormsOpen] = useState(false);
-  const formsRef = useRef<HTMLDivElement>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const isLoggedIn = !loading && !!firebaseUser;
+  const isAdmin = user?.role === "admin";
+  const userName =
+    user?.display_name || firebaseUser?.displayName || "";
+  const avatarInitial = userName?.charAt(0) || "U";
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
-      if (formsRef.current && !formsRef.current.contains(e.target as Node)) {
-        setFormsOpen(false);
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(e.target as Node)
+      ) {
+        setUserMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  const avatarInitial = userName?.charAt(0) || "U";
+  const handleSignOut = async () => {
+    setUserMenuOpen(false);
+    setMobileOpen(false);
+    await signOut();
+    router.push("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 h-14 bg-white ring-1 ring-neutral-950/8">
@@ -76,64 +84,71 @@ export function Navbar({
 
         {/* Desktop right section */}
         <div className="hidden items-center gap-2 lg:flex">
-          {isLoggedIn ? (
+          {loading ? (
+            <div className="h-8 w-20 animate-pulse rounded-full bg-neutral-100" />
+          ) : isLoggedIn ? (
             <>
-              <Link
-                href="/attendance"
-                className={`flex h-8 items-center gap-1 rounded-full px-3 text-[13px] font-medium transition-colors ${hasActiveEvent
-                  ? "bg-primary text-white hover:bg-primary-dark"
-                  : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
-                  }`}
-              >
-                ✓ 今日點名
-              </Link>
-
-              <div ref={formsRef} className="relative">
-                <button
-                  onClick={() => setFormsOpen((v) => !v)}
-                  className="flex h-8 items-center gap-1 rounded-full px-3 text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  className="flex h-8 items-center gap-1.5 rounded-full bg-neutral-900 px-3 text-[13px] font-medium text-white transition-colors hover:bg-neutral-800"
                 >
-                  📋 表單報名
-                  <ChevronDownIcon className="h-3 w-3" />
-                </button>
-
-                {formsOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white p-1 shadow-lg ring-1 ring-neutral-950/8">
-                    {openForms.length > 0 ? (
-                      openForms.map((form) => (
-                        <Link
-                          key={form.id}
-                          href={`/forms/${form.id}`}
-                          className="block rounded-lg px-3 py-2 text-[13px] text-neutral-700 transition-colors hover:bg-neutral-50"
-                          onClick={() => setFormsOpen(false)}
-                        >
-                          {form.title}
-                        </Link>
-                      ))
-                    ) : (
-                      <p className="px-3 py-4 text-center text-[13px] text-neutral-400">
-                        目前沒有開放表單
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
+                  <Cog6ToothIcon className="h-3.5 w-3.5" />
+                  後台管理
+                </Link>
+              )}
 
               <div className="h-5 w-px bg-neutral-200" aria-hidden />
 
-              <Link
-                href="/profile"
-                className="flex h-8 w-8 items-center justify-center rounded-full ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
-              >
-                <span className="text-[13px] font-medium text-neutral-700">
-                  {avatarInitial}
-                </span>
-              </Link>
+              <div ref={userMenuRef} className="relative">
+                <button
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex h-8 items-center gap-2 rounded-full px-1 pr-2.5 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                    {avatarInitial}
+                  </span>
+                  <ChevronDownIcon className="h-3 w-3 text-neutral-500" />
+                </button>
+
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-52 rounded-xl bg-white p-1 shadow-lg ring-1 ring-neutral-950/8">
+                    <div className="border-b border-neutral-100 px-3 py-2.5">
+                      <p className="truncate text-[13px] font-medium text-neutral-950">
+                        {userName}
+                      </p>
+                      <p className="truncate text-[11px] text-neutral-500">
+                        {firebaseUser?.email}
+                      </p>
+                    </div>
+                    {isAdmin && (
+                      <Link
+                        href="/admin"
+                        className="mt-1 flex items-center gap-2 rounded-lg px-3 py-2 text-[13px] text-neutral-700 transition-colors hover:bg-neutral-50"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <Cog6ToothIcon className="h-4 w-4 text-neutral-400" />
+                        後台管理
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleSignOut}
+                      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[13px] text-red-600 transition-colors hover:bg-red-50"
+                    >
+                      <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+                      登出
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           ) : (
-            <button className="flex h-9 items-center gap-2 rounded-full px-4 text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50">
+            <Link
+              href="/login"
+              className="flex h-9 items-center gap-2 rounded-full px-4 text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
+            >
               以 Google 登入
-            </button>
+            </Link>
           )}
         </div>
 
@@ -168,30 +183,51 @@ export function Navbar({
           </div>
 
           <div className="mt-3 border-t border-border pt-3">
-            {isLoggedIn ? (
+            {loading ? (
+              <div className="flex h-10 items-center justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+              </div>
+            ) : isLoggedIn ? (
               <div className="flex flex-col gap-2">
-                <Link
-                  href="/attendance"
-                  className={`flex h-10 items-center justify-center rounded-full text-[13px] font-medium transition-colors ${hasActiveEvent
-                    ? "bg-primary text-white"
-                    : "text-neutral-600 ring-1 ring-neutral-950/8"
-                    }`}
-                  onClick={() => setMobileOpen(false)}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-neutral-900 text-[13px] font-medium text-white transition-colors"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Cog6ToothIcon className="h-4 w-4" />
+                    後台管理
+                  </Link>
+                )}
+                <div className="flex items-center gap-3 rounded-lg bg-neutral-50 px-3 py-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                    {avatarInitial}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-medium text-neutral-950">
+                      {userName}
+                    </p>
+                    <p className="truncate text-[11px] text-neutral-500">
+                      {firebaseUser?.email}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex h-10 items-center justify-center gap-1.5 rounded-full text-[13px] font-medium text-red-600 ring-1 ring-red-200 transition-colors hover:bg-red-50"
                 >
-                  ✓ 今日點名
-                </Link>
-                <Link
-                  href="/forms"
-                  className="flex h-10 items-center justify-center rounded-full text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  📋 表單報名
-                </Link>
+                  <ArrowRightStartOnRectangleIcon className="h-4 w-4" />
+                  登出
+                </button>
               </div>
             ) : (
-              <button className="flex h-10 w-full items-center justify-center rounded-full text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50">
+              <Link
+                href="/login"
+                className="flex h-10 w-full items-center justify-center rounded-full text-[13px] font-medium text-neutral-600 ring-1 ring-neutral-950/8 transition-colors hover:bg-neutral-50"
+                onClick={() => setMobileOpen(false)}
+              >
                 以 Google 登入
-              </button>
+              </Link>
             )}
           </div>
         </div>

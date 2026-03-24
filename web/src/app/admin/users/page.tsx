@@ -1,40 +1,42 @@
 "use client";
 
-import { useState } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Button } from "@/components/ui/button";
+import { useState, useEffect, useCallback } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import {
+  AdminPageHeader,
+  AdminFilterBar,
+  AdminTableSkeleton,
+  AdminErrorState,
+  AdminEmptyState,
+  ConfirmDialog,
+  FormModal,
+  FormField,
+  type TabItem,
+} from "@/components/admin/shared";
+import { formatTimestamp, adminFetch } from "@/lib/admin-utils";
 
 type RoleTab = "all" | "admin" | "club_member";
 
-interface MockUser {
-  id: string;
-  name: string;
+interface User {
+  uid: string;
+  display_name: string;
   email: string;
   role: "admin" | "club_member";
-  club: string;
-  createdAt: string;
+  club_id?: string;
+  created_at: unknown;
 }
 
-const mockUsers: MockUser[] = [
-  { id: "1", name: "管理員", email: "admin@nca.ncku.edu.tw", role: "admin", club: "—", createdAt: "2025-08-01" },
-  { id: "2", name: "王小明", email: "wang@club.ncku.edu.tw", role: "club_member", club: "吉他社", createdAt: "2025-09-10" },
-  { id: "3", name: "李美麗", email: "lee@club.ncku.edu.tw", role: "club_member", club: "熱舞社", createdAt: "2025-09-12" },
-  { id: "4", name: "張大衛", email: "chang@club.ncku.edu.tw", role: "club_member", club: "攝影社", createdAt: "2025-09-15" },
-  { id: "5", name: "陳志明", email: "chen@club.ncku.edu.tw", role: "club_member", club: "桌遊社", createdAt: "2025-09-20" },
-  { id: "6", name: "林欣怡", email: "lin@club.ncku.edu.tw", role: "club_member", club: "日文研究社", createdAt: "2025-10-01" },
-  { id: "7", name: "副管理員", email: "admin2@nca.ncku.edu.tw", role: "admin", club: "—", createdAt: "2025-08-05" },
-  { id: "8", name: "周杰倫", email: "chou@club.ncku.edu.tw", role: "club_member", club: "籃球社", createdAt: "2025-10-10" },
-];
-
-const tabs: { key: RoleTab; label: string }[] = [
+const tabs: TabItem<RoleTab>[] = [
   { key: "all", label: "全部" },
   { key: "admin", label: "管理員" },
   { key: "club_member", label: "社團成員" },
 ];
 
-const roleConfig: Record<string, { variant: "primary" | "neutral"; label: string }> = {
+const roleConfig: Record<
+  string,
+  { variant: "primary" | "neutral"; label: string }
+> = {
   admin: { variant: "primary", label: "管理員" },
   club_member: { variant: "neutral", label: "社團成員" },
 };
@@ -42,105 +44,249 @@ const roleConfig: Record<string, { variant: "primary" | "neutral"; label: string
 export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<RoleTab>("all");
   const [search, setSearch] = useState("");
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const filtered = mockUsers.filter((u) => {
+  // role change confirmation
+  const [roleTarget, setRoleTarget] = useState<{
+    uid: string;
+    displayName: string;
+    currentRole: string;
+    newRole: "admin" | "club_member";
+    newRoleLabel: string;
+  } | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+
+  // club association modal
+  const [clubTarget, setClubTarget] = useState<{
+    uid: string;
+    displayName: string;
+    clubId: string;
+  } | null>(null);
+  const [clubLoading, setClubLoading] = useState(false);
+
+  const fetchUsers = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await adminFetch<{ users: User[] }>("/api/admin/users");
+      setUsers(data.users || []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "無法載入用戶資料");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [fetchUsers]);
+
+  // --- role change ---
+  const openRoleConfirm = (user: User) => {
+    const newRole = user.role === "admin" ? "club_member" : "admin";
+    const newRoleLabel = newRole === "admin" ? "管理員" : "社團成員";
+    setRoleTarget({
+      uid: user.uid,
+      displayName: user.display_name,
+      currentRole: user.role,
+      newRole,
+      newRoleLabel,
+    });
+  };
+
+  const handleRoleConfirm = async () => {
+    if (!roleTarget) return;
+    setRoleLoading(true);
+    try {
+      await adminFetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: roleTarget.uid, role: roleTarget.newRole }),
+      });
+      setRoleTarget(null);
+      await fetchUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "角色更新失敗，請稍後再試");
+    } finally {
+      setRoleLoading(false);
+    }
+  };
+
+  // --- club association ---
+  const openClubModal = (user: User) => {
+    setClubTarget({
+      uid: user.uid,
+      displayName: user.display_name,
+      clubId: user.club_id ?? "",
+    });
+  };
+
+  const handleClubSave = async () => {
+    if (!clubTarget) return;
+    setClubLoading(true);
+    try {
+      await adminFetch("/api/admin/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: clubTarget.uid,
+          club_id: clubTarget.clubId || null,
+        }),
+      });
+      setClubTarget(null);
+      await fetchUsers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "社團關聯更新失敗");
+    } finally {
+      setClubLoading(false);
+    }
+  };
+
+  const filtered = users.filter((u) => {
     if (activeTab !== "all" && u.role !== activeTab) return false;
-    if (
-      search &&
-      !u.name.includes(search) &&
-      !u.email.includes(search) &&
-      !u.club.includes(search)
-    )
-      return false;
+    if (search) {
+      const q = search.toLowerCase();
+      const name = (u.display_name ?? "").toLowerCase();
+      const email = (u.email ?? "").toLowerCase();
+      const club = (u.club_id ?? "").toLowerCase();
+      if (!name.includes(q) && !email.includes(q) && !club.includes(q))
+        return false;
+    }
     return true;
   });
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight text-neutral-950">
-          用戶管理
-        </h1>
-      </div>
+      <AdminPageHeader title="用戶管理" count={!loading && !error ? users.length : undefined} />
 
       <Card className="mt-6">
-        <div className="flex flex-wrap items-center gap-3 border-b border-border px-5 pt-4 pb-3">
-          <div className="flex gap-1">
-            {tabs.map((t) => (
-              <Button
-                key={t.key}
-                variant="pill"
-                size="sm"
-                active={activeTab === t.key}
-                onClick={() => setActiveTab(t.key)}
-              >
-                {t.label}
-              </Button>
-            ))}
-          </div>
-          <div className="ml-auto flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5">
-            <MagnifyingGlassIcon className="h-4 w-4 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="搜尋用戶..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-44 bg-transparent text-[13px] outline-none placeholder:text-neutral-400"
-            />
-          </div>
-        </div>
+        <AdminFilterBar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="搜尋用戶..."
+        />
 
-        <table className="w-full text-left text-[13px]">
-          <thead>
-            <tr className="bg-neutral-100 text-neutral-500">
-              <th className="h-10 px-5 font-medium">姓名</th>
-              <th className="h-10 px-3 font-medium">Email</th>
-              <th className="h-10 px-3 font-medium">角色</th>
-              <th className="h-10 px-3 font-medium">所屬社團</th>
-              <th className="h-10 px-3 font-medium">建立日期</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((user) => {
-              const badge = roleConfig[user.role];
-              return (
-                <tr
-                  key={user.id}
-                  className="border-b border-border/50 last:border-0 hover:bg-primary/5"
-                >
-                  <td className="h-12 px-5">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-semibold text-neutral-600">
-                        {user.name[0]}
-                      </div>
-                      <span className="font-medium text-neutral-950">
-                        {user.name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="h-12 px-3 font-mono text-[12px] text-neutral-400">
-                    {user.email}
-                  </td>
-                  <td className="h-12 px-3">
-                    <Badge variant={badge.variant}>{badge.label}</Badge>
-                  </td>
-                  <td className="h-12 px-3 text-neutral-600">{user.club}</td>
-                  <td className="h-12 px-3 text-neutral-400">
-                    {user.createdAt}
-                  </td>
-                </tr>
-              );
-            })}
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={5} className="h-32 text-center text-sm text-neutral-400">
-                  沒有找到符合條件的用戶
-                </td>
+        {loading ? (
+          <AdminTableSkeleton rows={6} columns={[160, 120, 64, 80, 80, 72]} />
+        ) : error ? (
+          <AdminErrorState message={error} onRetry={fetchUsers} />
+        ) : (
+          <table className="w-full text-left text-[13px]">
+            <thead>
+              <tr className="bg-neutral-100 text-neutral-500">
+                <th className="h-10 px-5 font-medium">姓名</th>
+                <th className="h-10 px-3 font-medium">Email</th>
+                <th className="h-10 px-3 font-medium">角色</th>
+                <th className="h-10 px-3 font-medium">所屬社團</th>
+                <th className="h-10 px-3 font-medium">建立日期</th>
+                <th className="h-10 px-3 font-medium">操作</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filtered.map((user) => {
+                const badge = roleConfig[user.role];
+                return (
+                  <tr
+                    key={user.uid}
+                    className="border-b border-border/50 last:border-0 hover:bg-primary/5"
+                  >
+                    <td className="h-12 px-5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-neutral-200 text-[11px] font-semibold text-neutral-600">
+                          {(user.display_name ?? "?")[0]}
+                        </div>
+                        <span className="font-medium text-neutral-950">
+                          {user.display_name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="h-12 px-3 font-mono text-[12px] text-neutral-400">
+                      {user.email}
+                    </td>
+                    <td className="h-12 px-3">
+                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                    </td>
+                    <td className="h-12 px-3">
+                      <button
+                        className="text-[12px] text-neutral-600 underline decoration-dashed underline-offset-2 hover:text-neutral-800"
+                        onClick={() => openClubModal(user)}
+                        title="點擊設定社團"
+                      >
+                        {user.club_id || "—"}
+                      </button>
+                    </td>
+                    <td className="h-12 px-3 text-neutral-400">
+                      {formatTimestamp(user.created_at as Parameters<typeof formatTimestamp>[0])}
+                    </td>
+                    <td className="h-12 px-3">
+                      <button
+                        onClick={() => openRoleConfirm(user)}
+                        className="rounded-full border border-border px-2.5 py-1 text-[11px] font-medium text-neutral-600 transition-colors hover:bg-neutral-100"
+                      >
+                        {user.role === "club_member"
+                          ? "設為管理員"
+                          : "設為社團成員"}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <AdminEmptyState
+                  message="沒有找到符合條件的用戶"
+                  colSpan={6}
+                />
+              )}
+            </tbody>
+          </table>
+        )}
       </Card>
+
+      {/* role change confirm */}
+      <ConfirmDialog
+        open={!!roleTarget}
+        onClose={() => setRoleTarget(null)}
+        onConfirm={handleRoleConfirm}
+        loading={roleLoading}
+        title="變更用戶角色"
+        description={
+          roleTarget
+            ? `確定要將「${roleTarget.displayName}」的角色變更為「${roleTarget.newRoleLabel}」嗎？`
+            : undefined
+        }
+        confirmLabel="確認變更"
+      />
+
+      {/* club association modal */}
+      <FormModal
+        open={!!clubTarget}
+        onClose={() => setClubTarget(null)}
+        onSubmit={handleClubSave}
+        title={
+          clubTarget
+            ? `設定「${clubTarget.displayName}」的所屬社團`
+            : "設定所屬社團"
+        }
+        submitLabel="儲存"
+        loading={clubLoading}
+      >
+        <FormField
+          label="社團 ID"
+          value={clubTarget?.clubId ?? ""}
+          onChange={(e) =>
+            setClubTarget((prev) =>
+              prev ? { ...prev, clubId: e.target.value } : null,
+            )
+          }
+          placeholder="輸入社團 ID，留空則清除關聯"
+          hint="輸入此用戶所屬的社團代碼"
+        />
+      </FormModal>
     </>
   );
 }

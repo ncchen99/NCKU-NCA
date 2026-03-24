@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   HomeIcon,
   DocumentTextIcon,
@@ -12,7 +12,9 @@ import {
   TagIcon,
   UsersIcon,
   ArrowRightStartOnRectangleIcon,
+  ArrowLeftIcon,
 } from "@heroicons/react/24/outline";
+import { useAuth } from "@/lib/auth-context";
 import type { ComponentType, SVGProps } from "react";
 
 interface NavItem {
@@ -39,16 +41,37 @@ function isActive(pathname: string, href: string) {
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, firebaseUser, signOut } = useAuth();
+
+  const displayName =
+    user?.display_name || firebaseUser?.displayName || "管理員";
+  const displayEmail = user?.email || firebaseUser?.email || "";
+  const avatarInitial = displayName.charAt(0) || "管";
+
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/login");
+  };
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 flex w-60 flex-col bg-neutral-950">
-      <div className="flex h-16 items-center gap-2 px-5">
-        <span className="text-sm font-semibold tracking-tight text-white">
-          成大社聯會
-        </span>
-        <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/70">
-          Admin
-        </span>
+      <div className="flex h-16 items-center justify-between px-5">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold tracking-tight text-white">
+            成大社聯會
+          </span>
+          <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-medium text-white/70">
+            Admin
+          </span>
+        </div>
+        <Link
+          href="/"
+          className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-white/10 hover:text-white"
+          title="回到前台"
+        >
+          <ArrowLeftIcon className="h-4 w-4" />
+        </Link>
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-2">
@@ -74,13 +97,18 @@ export function AdminSidebar() {
       <div className="border-t border-white/10 px-4 py-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
-            管
+            {avatarInitial}
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="truncate text-[13px] font-medium text-white">管理員</p>
-            <p className="truncate text-[11px] text-neutral-500">admin@nca.ncku.edu.tw</p>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[13px] font-medium text-white">
+              {displayName}
+            </p>
+            <p className="truncate text-[11px] text-neutral-500">
+              {displayEmail}
+            </p>
           </div>
           <button
+            onClick={handleSignOut}
             className="rounded-md p-1.5 text-neutral-500 transition-colors hover:bg-white/10 hover:text-white"
             title="登出"
           >

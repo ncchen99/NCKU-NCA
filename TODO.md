@@ -133,21 +133,21 @@
 
 ### 3.2 網站內容管理 `/admin/content`
 - [x] 頁面列表 UI（圖示 + 描述 + 編輯按鈕）
-- [ ] Markdown 編輯器（Milkdown 或 TipTap）
-- [ ] 各頁面內容 CRUD
+- [x] 各頁面內容 CRUD（FormModal 內嵌 Markdown 編輯）
+- [ ] 富文本 Markdown 編輯器（Milkdown 或 TipTap）
 - [ ] 圖片上傳整合（Firebase Storage）
 - [ ] 儲存並發布 + ISR 觸發
 
 ### 3.3 文章管理 `/admin/posts`
 - [x] 文章列表 UI（狀態 tabs + 搜尋 + 表格 + mock data）
-- [ ] 文章 CRUD（新增 / 編輯 / 刪除）
+- [x] 文章 CRUD（新增 / 編輯 / 刪除 Modal）
+- [x] 狀態切換（draft ↔ published）
 - [ ] Markdown 編輯器 + 封面圖上傳
-- [ ] 狀態切換（draft ↔ published）
 
 ### 3.4 表單管理 `/admin/forms`
 - [x] 表單列表 UI（狀態 tabs + 搜尋 + mock data）
-- [ ] 新增表單界面（JSON Schema 編輯器）
-- [ ] 表單欄位拖曳排序
+- [x] 表單 CRUD（新增 / 編輯 / 刪除 Modal）
+- [ ] 表單欄位拖曳排序（JSON Schema 編輯器）
 - [ ] 條件邏輯設定 UI
 - [ ] 表單模板（社博 / 寒假場協 / 一般報名 / 出席調查）
 - [ ] 回覆管理頁面 `/admin/forms/[form_id]/responses`
@@ -155,13 +155,16 @@
 
 ### 3.5 保證金管理 `/admin/deposit`
 - [x] 保證金列表 UI（狀態 tabs + 表格 + mock data）
-- [ ] 狀態機操作（pending → paid → returned）接入 Firestore
-- [ ] 批次操作 Toolbar
+- [x] 狀態機操作（pending → paid → returned）接入 Firestore
+- [x] 批次操作 Toolbar（checkbox 多選 + 批次標記/退還）
+- [x] 備註編輯 Modal
 - [ ] CSV 匯出
 
 ### 3.6 點名管理 `/admin/attendance`
 - [x] 點名事件列表 UI（Cards Grid + 進度條 + mock data）
-- [ ] 新增點名事件
+- [x] 新增點名事件（FormModal）
+- [x] 編輯點名事件
+- [x] 狀態快速切換（upcoming→open→closed）
 - [ ] 事件詳頁（`/admin/attendance/[event_id]`）
 - [ ] 即時出席統計 + 出席列表
 - [ ] 手動補點名 Modal
@@ -169,15 +172,17 @@
 
 ### 3.7 社團名單管理 `/admin/clubs`
 - [x] 社團列表 UI（分類 tabs + 搜尋 + 表格 + mock data）
-- [ ] YAML / JSON 匯入流程 Modal（4 步驟）
-- [ ] 預覽差異（新增 / 更新 / 無變動）
-- [ ] Firestore 批次寫入
+- [x] 社團編輯 Modal（單一社團 CRUD）
+- [x] JSON 匯入流程 Modal（上傳 → 預覽 → 結果）
+- [x] Firestore 批次寫入
+- [x] 新增單一社團 API Route（GET/PUT `/api/admin/clubs/[clubId]`）
+- [ ] YAML 匯入支援
 - [ ] YAML / JSON 匯出
 
 ### 3.8 用戶管理 `/admin/users`
 - [x] 用戶列表 UI（角色 tabs + 表格 + mock data）
-- [ ] 角色指派功能（接入 `/api/auth/claims`）
-- [ ] 關聯社團設定
+- [x] 角色指派功能（ConfirmDialog + API 串接）
+- [x] 關聯社團設定（FormModal）
 
 ---
 
@@ -247,7 +252,7 @@
 | ------- | ------------ | ----------------------------------------------- |
 | Phase 1 | ✅ 完成       | 基礎設施、元件庫、認證系統、Layout              |
 | Phase 2 | 🔄 大部分完成 | 所有前台頁面 UI 已建立，待接入 Firestore 資料   |
-| Phase 3 | 🔄 UI 完成    | 所有後台頁面 UI + mock data 已建立，待接入 CRUD |
+| Phase 3 | 🔄 CRUD 完成  | 所有後台頁面已接入 API CRUD，共用元件模組化完成  |
 | Phase 4 | 🔄 大部分完成 | API Routes + 資料層 + Security Rules + Seed 腳本完成 |
 | Phase 5 | ⏳ 待開始     | 優化與上線                                      |
 
@@ -289,7 +294,17 @@ web/
 │   │   ├── ui/                     # 設計系統元件庫（9 個元件）
 │   │   ├── layout/                 # Navbar / Footer / Banner / PublicLayout
 │   │   ├── home/                   # 首頁 Section 元件（4 個）
-│   │   └── admin/                  # Admin Sidebar
+│   │   └── admin/                  # Admin Sidebar + 共用管理元件
+│   │       ├── sidebar.tsx         # Admin Sidebar
+│   │       └── shared/             # 共用管理元件（8 個）
+│   │           ├── admin-page-header.tsx   # 頁面標題 + 操作按鈕
+│   │           ├── admin-filter-bar.tsx    # Pill tabs + 搜尋列
+│   │           ├── confirm-dialog.tsx      # 確認對話框
+│   │           ├── form-modal.tsx          # 表單 Modal
+│   │           ├── form-field.tsx          # 表單欄位元件
+│   │           ├── admin-empty-state.tsx   # 空狀態
+│   │           ├── admin-loading-state.tsx # 載入骨架
+│   │           └── admin-error-state.tsx   # 錯誤狀態
 │   ├── lib/
 │   │   ├── firebase.ts             # Firebase Client（延遲初始化）
 │   │   ├── firebase-admin.ts       # Firebase Admin（延遲初始化）
