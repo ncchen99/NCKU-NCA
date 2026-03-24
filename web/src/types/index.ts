@@ -74,18 +74,18 @@ export interface DependsOn {
 export interface FormField {
   id: string;
   type:
-    | "text"
-    | "textarea"
-    | "number"
-    | "email"
-    | "phone"
-    | "select"
-    | "radio"
-    | "checkbox"
-    | "date"
-    | "file"
-    | "club_picker"
-    | "section_header";
+  | "text"
+  | "textarea"
+  | "number"
+  | "email"
+  | "phone"
+  | "select"
+  | "radio"
+  | "checkbox"
+  | "date"
+  | "file"
+  | "club_picker"
+  | "section_header";
   label: string;
   placeholder?: string;
   required: boolean;
@@ -114,11 +114,11 @@ export interface Form {
   title: string;
   description: string;
   form_type:
-    | "expo_registration"
-    | "winter_association_registration"
-    | "general_registration"
-    | "attendance_survey"
-    | "custom";
+  | "expo_registration"
+  | "winter_association_registration"
+  | "general_registration"
+  | "attendance_survey"
+  | "custom";
   status: "draft" | "open" | "closed";
   settings: Record<string, unknown>;
   deposit_policy: DepositPolicy;

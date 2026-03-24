@@ -49,11 +49,11 @@ interface Form {
   title: string;
   description: string;
   form_type:
-    | "expo_registration"
-    | "winter_association_registration"
-    | "general_registration"
-    | "attendance_survey"
-    | "custom";
+  | "expo_registration"
+  | "winter_association_registration"
+  | "general_registration"
+  | "attendance_survey"
+  | "custom";
   status: "draft" | "open" | "closed";
   settings: Record<string, unknown>;
   deposit_policy: DepositPolicy;

@@ -132,11 +132,10 @@ export default function NewsPage() {
                   setActiveCategory(cat);
                   setPage(1);
                 }}
-                className={`inline-flex h-[32px] items-center rounded-full px-3 text-xs font-[500] transition-colors ${
-                  activeCategory === cat
+                className={`inline-flex h-[32px] items-center rounded-full px-3 text-xs font-[500] transition-colors ${activeCategory === cat
                     ? "bg-primary text-white"
                     : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
-                }`}
+                  }`}
               >
                 {cat}
               </button>
@@ -187,11 +186,10 @@ export default function NewsPage() {
                 <button
                   key={p}
                   onClick={() => setPage(p)}
-                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors ${
-                    page === p
+                  className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors ${page === p
                       ? "bg-primary text-white"
                       : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
-                  }`}
+                    }`}
                 >
                   {p}
                 </button>
