@@ -17,11 +17,11 @@
 
 ### 1.1 介面介紹
 
-| 介面 | 圖片 |
-| --- | --- |
-| 1. 首頁 | ![首頁](data/assets/images/demo1.png) |
-| 2. 最新消息 | ![最新消息](data/assets/images/demo2.png) |
-| 3. 文章區塊 | ![文章區塊](data/assets/images/demo3.png) |
+| 介面              | 圖片                                            |
+| ----------------- | ----------------------------------------------- |
+| 1. 首頁           | ![首頁](data/assets/images/demo1.png)           |
+| 2. 最新消息       | ![最新消息](data/assets/images/demo2.png)       |
+| 3. 文章區塊       | ![文章區塊](data/assets/images/demo3.png)       |
 | 4. 後臺 Dashboard | ![後臺 Dashboard](data/assets/images/demo4.png) |
 
 ## 2. 目錄與角色
