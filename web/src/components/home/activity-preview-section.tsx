@@ -114,13 +114,13 @@ async function ActivityPreviewSection() {
                 className="group flex overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
               >
                 <article className="flex w-full">
-                  <div className="h-[120px] w-[120px] shrink-0 bg-neutral-200">
+                  <div className="min-h-[120px] w-[120px] shrink-0 self-stretch bg-neutral-200">
                     {item.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={item.cover_image_url}
                         alt={item.title}
-                        className="h-full w-full object-cover"
+                        className="block h-full w-full object-cover"
                       />
                     ) : null}
                   </div>
