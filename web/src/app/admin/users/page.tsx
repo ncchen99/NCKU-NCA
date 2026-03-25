@@ -17,10 +17,16 @@ import {
   compareZh,
   type TabItem,
 } from "@/components/admin/shared";
+import { ClubSearchSelect } from "@/components/shared/club-search-select";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
 import { toast } from "@/components/ui/use-toast";
 
 type RoleTab = "all" | "admin" | "club_member";
+
+interface Club {
+  id: string;
+  name: string;
+}
 
 interface User {
   uid: string;
@@ -317,7 +323,6 @@ export default function UsersPage() {
         confirmLabel="確認變更"
       />
 
-      {/* club association modal */}
       <FormModal
         open={!!clubTarget}
         onClose={() => setClubTarget(null)}
@@ -330,17 +335,20 @@ export default function UsersPage() {
         submitLabel="儲存"
         loading={clubLoading}
       >
-        <FormField
-          label="社團 ID"
-          value={clubTarget?.clubId ?? ""}
-          onChange={(e) =>
-            setClubTarget((prev) =>
-              prev ? { ...prev, clubId: e.target.value } : null,
-            )
-          }
-          placeholder="輸入社團 ID，留空則清除關聯"
-          hint="輸入此用戶所屬的社團代碼"
-        />
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium text-neutral-700">選擇社團</label>
+          <ClubSearchSelect
+            value={clubTarget?.clubId ?? ""}
+            onChange={(val) =>
+              setClubTarget((prev) => (prev ? { ...prev, clubId: val } : null))
+            }
+            placeholder="搜尋社團名稱..."
+            initialClubName={users.find(u => u.uid === clubTarget?.uid)?.club_name}
+          />
+          <p className="text-xs text-neutral-400">
+            選擇此用戶所屬的社團，可搜尋社團名稱
+          </p>
+        </div>
       </FormModal>
     </>
   );

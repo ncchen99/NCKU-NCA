@@ -602,25 +602,13 @@ export default function AttendancePage() {
           onChange={(e) => updateForm("description", e.target.value)}
           placeholder="活動說明（選填）"
         />
-        <div className="flex items-end gap-2">
-          <div className="flex-1">
-            <FormField
-              label="點名密碼"
-              required
-              value={form.passcode || ""}
-              onChange={(e) => updateForm("passcode", e.target.value)}
-              placeholder="請輸入或產生密碼"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="mb-[2px] h-[38px] px-3"
-            onClick={() => updateForm("passcode", Math.random().toString(36).slice(-6).toUpperCase())}
-          >
-            隨機產生
-          </Button>
-        </div>
+        <FormField
+          label="點名密碼"
+          required
+          value={form.passcode || ""}
+          onChange={(e) => updateForm("passcode", e.target.value)}
+          placeholder="請輸入點名密碼"
+        />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <FormField
             label="開始時間"

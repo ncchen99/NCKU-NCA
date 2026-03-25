@@ -31,11 +31,13 @@ export async function getAllClubs(
       query = query.where("is_active", "==", options.isActive);
     }
 
-    query = query.orderBy("name", "asc");
     const snapshot = await query.get();
-    return snapshot.docs.map(
+    const result = snapshot.docs.map(
       (doc) => ({ id: doc.id, ...doc.data() }) as Club
     );
+
+    // Sort in memory to avoid requiring composite indexes for equality + sort
+    return result.sort((a, b) => (a.name || "").localeCompare(b.name || "", "zh-Hant"));
   } catch (error) {
     throw new Error(
       `Failed to get all clubs: ${error instanceof Error ? error.message : error}`

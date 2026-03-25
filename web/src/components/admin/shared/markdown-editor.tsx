@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
@@ -10,12 +8,28 @@ import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
+import { 
+  ChevronDownIcon, 
+  HashtagIcon, 
+  BoldIcon, 
+  CodeBracketIcon, 
+  SquaresPlusIcon,
+  ItalicIcon,
+  ListBulletIcon,
+  NumberedListIcon,
+  LinkIcon,
+  PhotoIcon,
+  ChatBubbleBottomCenterTextIcon,
+  MinusIcon,
+  TableCellsIcon,
+} from "@heroicons/react/20/solid";
 
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   minHeight?: string;
+  forms?: { id: string; title: string }[];
 }
 
 const processor = unified()
@@ -30,9 +44,12 @@ export function MarkdownEditor({
   onChange,
   placeholder = "輸入 Markdown 內容…",
   minHeight = "320px",
+  forms = [],
 }: MarkdownEditorProps) {
   const [html, setHtml] = useState("");
+  const [formMenuOpen, setFormMenuOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const render = useCallback(async (md: string) => {
     try {
@@ -49,8 +66,43 @@ export function MarkdownEditor({
     return () => clearTimeout(debounceRef.current);
   }, [value, render]);
 
+  useEffect(() => {
+    if (!formMenuOpen) return;
+    const onClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setFormMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [formMenuOpen]);
+
+  const insertText = (before: string, after: string = "") => {
+    const textarea = document.getElementById("post-markdown-editor") as HTMLTextAreaElement;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const beforeText = text.substring(0, start);
+    const afterText = text.substring(end);
+    const selectedText = text.substring(start, end);
+
+    const newValue = beforeText + before + selectedText + after + afterText;
+    onChange(newValue);
+
+    // Reset focus and selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        end + before.length
+      );
+    }, 0);
+  };
+
   return (
-    <div>
+    <div ref={containerRef}>
       <label className="mb-1.5 block text-sm font-medium text-neutral-700">
         內容 (Markdown)
       </label>
@@ -59,29 +111,192 @@ export function MarkdownEditor({
         style={{ minHeight }}
       >
         <div className="flex flex-col">
-          <div className="mb-1 text-[11px] font-medium uppercase tracking-wider text-neutral-400">
-            編輯
+          <div className="mb-1 flex items-center justify-between">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-neutral-400">
+              編輯
+            </div>
           </div>
           <div
-            className="markdown-editor-wrapper flex-1 overflow-auto rounded-lg border border-border bg-neutral-50 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
+            className="group/editor relative flex flex-1 flex-col overflow-hidden rounded-lg border border-border bg-neutral-50 transition-colors focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/30"
             style={{ minHeight }}
           >
-            <Editor
-              value={value}
-              onValueChange={onChange}
-              highlight={(code) => Prism.highlight(code, Prism.languages.markdown, "markdown")}
-              textareaId="post-markdown-editor"
-              placeholder={placeholder}
-              padding={12}
-              className="markdown-editor h-full min-h-full"
-              style={{
-                minHeight,
-                fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
-                fontSize: 13,
-                lineHeight: 1.7,
-                background: "transparent",
-              }}
-            />
+            <div className="flex-1 overflow-auto">
+              <Editor
+                value={value}
+                onValueChange={onChange}
+                highlight={(code) => Prism.highlight(code, Prism.languages.markdown, "markdown")}
+                textareaId="post-markdown-editor"
+                placeholder={placeholder}
+                padding={12}
+                className="markdown-editor h-full min-h-full"
+                style={{
+                  minHeight,
+                  fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                  fontSize: 13,
+                  lineHeight: 1.7,
+                  background: "transparent",
+                }}
+              />
+            </div>
+            
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-0.5 border-t border-border bg-white p-1">
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => insertText("## ")}
+                  title="大標題 (H2)"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <span className="text-[14px] font-bold">H2</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("### ")}
+                  title="小標題 (H3)"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <span className="text-[12px] font-bold">H3</span>
+                </button>
+              </div>
+
+              <div className="mx-1 h-4 w-px bg-border" />
+
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => insertText("**", "**")}
+                  title="粗體"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <BoldIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("*", "*")}
+                  title="斜體"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <ItalicIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("```\n", "\n```")}
+                  title="程式碼區塊"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <CodeBracketIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("[", "](url)")}
+                  title="連結"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <LinkIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mx-1 h-4 w-px bg-border" />
+
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => insertText("- ")}
+                  title="無序列表"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <ListBulletIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("1. ")}
+                  title="有序列表"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <NumberedListIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("> ")}
+                  title="引用"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <ChatBubbleBottomCenterTextIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mx-1 h-4 w-px bg-border" />
+
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => insertText("\n---\n")}
+                  title="分隔線"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <MinusIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("| 標題 | 標題 |\n| --- | --- |\n| 內容 | 內容 |\n")}
+                  title="表格"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <TableCellsIcon className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => insertText("![描述](", ")")}
+                  title="圖片"
+                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <PhotoIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mx-1 h-4 w-px bg-border" />
+              
+              {/* Form Selection */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setFormMenuOpen(!formMenuOpen)}
+                  className={`flex h-8 items-center gap-1 rounded bg-neutral-50 px-2 text-[12px] font-medium transition-colors hover:bg-neutral-100 ${formMenuOpen ? 'bg-neutral-100 text-primary' : 'text-neutral-600' }`}
+                >
+                  <SquaresPlusIcon className="h-4 w-4" />
+                  嵌入表單
+                  <ChevronDownIcon className={`h-3 w-3 transition-transform ${formMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+                
+                {formMenuOpen && (
+                  <div className="absolute bottom-full left-0 mb-2 w-56 flex-col overflow-hidden rounded-lg border border-border bg-white shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 z-50">
+                    <div className="border-b border-border bg-neutral-50/50 px-3 py-1.5 text-[11px] font-semibold text-neutral-400">
+                      選擇要嵌入的表單
+                    </div>
+                    <div className="max-h-48 overflow-y-auto py-1">
+                      {forms.length === 0 ? (
+                        <div className="px-3 py-2 text-[12px] text-neutral-400 text-center">尚無表單可供選擇</div>
+                      ) : (
+                        forms.map((f) => (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => {
+                              insertText(`\n\n[填寫表單：${f.title}](/forms/${f.id} "form-embed")\n`);
+                              setFormMenuOpen(false);
+                            }}
+                            className="flex w-full px-3 py-2 text-left text-[12px] text-neutral-700 hover:bg-neutral-50 hover:text-primary transition-colors"
+                          >
+                            {f.title}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex flex-col">
@@ -97,7 +312,7 @@ export function MarkdownEditor({
       </div>
       <style>{`
         .markdown-editor textarea {
-          outline: none;
+          outline: none !important;
           color: #111827;
           caret-color: #111827;
         }
@@ -152,3 +367,4 @@ export function MarkdownEditor({
     </div>
   );
 }
+

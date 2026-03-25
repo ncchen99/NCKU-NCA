@@ -7,6 +7,8 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
+import { ClubSearchSelect } from "@/components/shared/club-search-select";
+import { useId } from "react";
 
 type ProfileUser = {
   display_name: string;
@@ -27,11 +29,9 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState("");
   const [clubId, setClubId] = useState("");
+  const [clubName, setClubName] = useState("");
   const [positionTitle, setPositionTitle] = useState("");
   const [departmentGrade, setDepartmentGrade] = useState("");
-  const [defaultCategoryName, setDefaultCategoryName] = useState<
-    string | undefined
-  >(undefined);
 
   useEffect(() => {
     if (authLoading) return;
@@ -48,9 +48,9 @@ export default function ProfilePage() {
         if (u) {
           setDisplayName(u.display_name ?? "");
           setClubId(u.club_id ?? "");
+          setClubName(u.club_name ?? "");
           setPositionTitle(u.position_title ?? "");
           setDepartmentGrade(u.department_grade ?? "");
-          setDefaultCategoryName(u.club_category);
         } else {
           setDisplayName(firebaseUser.displayName ?? "");
         }
@@ -151,14 +151,18 @@ export default function ProfilePage() {
               />
             </label>
 
-            <div>
-              <p className="mb-2 text-[13px] font-medium text-neutral-700">所屬社團</p>
-              <ClubCategoryPicker
-                valueClubId={clubId}
-                onChangeClubId={setClubId}
-                defaultCategoryName={defaultCategoryName}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-[13px] font-medium text-neutral-700">所屬社團</span>
+              <ClubSearchSelect
+                value={clubId}
+                onChange={setClubId}
                 disabled={saving}
+                placeholder="搜尋並選擇您的社團"
+                initialClubName={clubName}
               />
+              <p className="text-[12px] text-neutral-400">
+                搜尋社團名稱，若不屬於任何社團請選擇「無」
+              </p>
             </div>
 
             <label className="flex flex-col gap-1.5">

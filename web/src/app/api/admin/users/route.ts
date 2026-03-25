@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
-import { getAllUsers, getClubsByIds, updateUserRole } from "@/lib/firestore";
+import { getAllUsers, getClubsByIds, createOrUpdateUser } from "@/lib/firestore";
 import { getAdminAuth } from "@/lib/firebase-admin";
 
 export async function GET(req: NextRequest) {
@@ -33,29 +33,46 @@ export async function PUT(req: NextRequest) {
   if (!admin) return unauthorizedResponse();
 
   try {
-    const { uid, role } = await req.json();
+    const { uid, role, club_id } = await req.json();
 
-    if (!uid || !role) {
+    if (!uid) {
       return Response.json(
-        { error: "請提供 uid 和 role" },
+        { error: "請提供 uid" },
         { status: 400 }
       );
     }
 
-    if (role !== "admin" && role !== "club_member") {
+    const updates: Record<string, any> = {};
+
+    if (role) {
+      if (role !== "admin" && role !== "club_member") {
+        return Response.json(
+          { error: "role 必須為 admin 或 club_member" },
+          { status: 400 }
+        );
+      }
+      updates.role = role;
+      // 同步更新 Firebase Auth Custom Claims
+      await getAdminAuth().setCustomUserClaims(uid, { role });
+    }
+
+    if (club_id !== undefined) {
+      updates.club_id = club_id;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return Response.json(
-        { error: "role 必須為 admin 或 club_member" },
+        { error: "未提供需要更新的欄位" },
         { status: 400 }
       );
     }
 
-    await updateUserRole(uid, role);
-    await getAdminAuth().setCustomUserClaims(uid, { role });
+    await createOrUpdateUser(uid, updates);
 
     return Response.json({ success: true });
   } catch (error) {
     return Response.json(
-      { error: error instanceof Error ? error.message : "更新使用者角色失敗" },
+      { error: error instanceof Error ? error.message : "更新使用者資料失敗" },
       { status: 500 }
     );
   }

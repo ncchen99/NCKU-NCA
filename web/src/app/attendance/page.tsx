@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layout/public-layout";
-import { ClubCategoryPicker } from "@/components/public/club-category-picker";
+import { ClubSearchSelect } from "@/components/shared/club-search-select";
 import { useAuth } from "@/lib/auth-context";
 import { formatDateTimeZhTWFromUnknown } from "@/lib/datetime";
 import { Button } from "@/components/ui/button";
@@ -26,9 +26,6 @@ export default function AttendancePage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [userName, setUserName] = useState("");
-  const [defaultCategory, setDefaultCategory] = useState<string | undefined>(
-    undefined,
-  );
   const [defaultClubName, setDefaultClubName] = useState<string | undefined>(
     undefined,
   );
@@ -44,7 +41,6 @@ export default function AttendancePage() {
         if (d.user) {
           setClubId(d.user.club_id || "");
           setUserName(d.user.display_name || "");
-          setDefaultCategory(d.user.club_category || undefined);
           setDefaultClubName(d.user.club_name || undefined);
         }
       })
@@ -67,7 +63,6 @@ export default function AttendancePage() {
       // Only set if not already set by the initial fetch to avoid flickers
       setClubId((prev) => prev || user.club_id || "");
       setUserName((prev) => prev || user.display_name || "");
-      setDefaultCategory((prev) => prev || user.club_category);
       setDefaultClubName((prev) => prev || user.club_name);
     } else if (firebaseUser) {
       setUserName((prev) => prev || firebaseUser.displayName || "");
@@ -176,13 +171,17 @@ export default function AttendancePage() {
 
                   <div>
                     <p className="mb-2 text-[13px] font-medium text-neutral-700">簽到單位</p>
-                    <ClubCategoryPicker
-                      valueClubId={clubId}
-                      onChangeClubId={setClubId}
-                      defaultCategoryName={defaultCategory}
-                      defaultClubName={defaultClubName}
+                    <ClubSearchSelect
+                      value={clubId}
+                      onChange={setClubId}
+                      placeholder="搜尋並選擇您的社團"
+                      initialClubName={defaultClubName}
                       disabled={submitting}
+                      allowClear={false}
                     />
+                    <p className="mt-1 text-xs text-neutral-400">
+                      若搜尋不到，請確認社團名稱是否正確
+                    </p>
                   </div>
                   
                   <div>

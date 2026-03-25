@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { PublicLayout } from "@/components/layout/public-layout";
 import { getForm } from "@/lib/firestore/forms";
 import { anyTimestampToDate, formatDateTimeZhTW } from "@/lib/datetime";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
-import type { FormField } from "@/types";
+import { FormClient } from "./form-client";
 
 type Props = { params: Promise<{ form_id: string }> };
 
@@ -21,87 +20,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   } catch {
     return { title: "表單未找到" };
   }
-}
-
-const fieldTypeLabels: Record<string, string> = {
-  text: "文字輸入",
-  email: "電子信箱",
-  phone: "電話號碼",
-  number: "數字",
-  select: "下拉選單",
-  radio: "單選題",
-  checkbox: "多選題",
-  textarea: "長文字",
-  date: "日期",
-  file: "檔案上傳",
-  club_picker: "社團選擇",
-  section_header: "",
-};
-
-function FormFieldPreview({ field }: { field: FormField }) {
-  if (field.type === "section_header") {
-    return (
-      <div className="border-b border-border pb-2 pt-4">
-        <h3 className="text-[15px] font-semibold text-neutral-950">{field.label}</h3>
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <label className="mb-1.5 flex items-center gap-1 text-[13px] font-medium text-neutral-950">
-        {field.label}
-        {field.required && <span className="text-red-500">*</span>}
-      </label>
-      {field.type === "textarea" ? (
-        <div className="h-24 rounded-lg border border-border bg-neutral-50 px-3 py-2">
-          <span className="text-[13px] text-neutral-400">
-            {field.placeholder || fieldTypeLabels[field.type]}
-          </span>
-        </div>
-      ) : field.type === "select" || field.type === "club_picker" ? (
-        <div className="flex h-10 items-center rounded-lg border border-border bg-neutral-50 px-3">
-          <span className="text-[13px] text-neutral-400">
-            {field.placeholder || "請選擇..."}
-          </span>
-        </div>
-      ) : field.type === "radio" ? (
-        <div className="flex flex-wrap items-center gap-4 py-1">
-          {(field.options ?? ["是", "否"]).map((opt) => (
-            <label
-              key={opt}
-              className="flex items-center gap-1.5 text-[13px] text-neutral-700"
-            >
-              <span className="flex h-4 w-4 items-center justify-center rounded-full border border-border">
-                <span className="h-1.5 w-1.5 rounded-full" />
-              </span>
-              {opt}
-            </label>
-          ))}
-        </div>
-      ) : field.type === "checkbox" ? (
-        <div className="flex flex-wrap items-center gap-4 py-1">
-          {(field.options ?? []).map((opt) => (
-            <label
-              key={opt}
-              className="flex items-center gap-1.5 text-[13px] text-neutral-700"
-            >
-              <span className="flex h-4 w-4 items-center justify-center rounded border border-border">
-                <span className="h-2 w-2" />
-              </span>
-              {opt}
-            </label>
-          ))}
-        </div>
-      ) : (
-        <div className="flex h-10 items-center rounded-lg border border-border bg-neutral-50 px-3">
-          <span className="text-[13px] text-neutral-400">
-            {field.placeholder || fieldTypeLabels[field.type] || field.type}
-          </span>
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default async function FormPage({ params }: Props) {
@@ -208,31 +126,8 @@ export default async function FormPage({ params }: Props) {
             )}
           </div>
 
-          {/* Form fields */}
-          <div className="rounded-xl bg-white p-6 shadow-[0_0_0_1px_rgba(10,10,10,0.08)]">
-            <div className="flex flex-col gap-5">
-              {sortedFields.map((field) => (
-                <FormFieldPreview key={field.id} field={field} />
-              ))}
-              {sortedFields.length === 0 && (
-                <p className="py-4 text-center text-[13px] text-neutral-500">
-                  此表單目前尚無欄位。管理員可在後台設定表單欄位。
-                </p>
-              )}
-            </div>
-
-            <div className="mt-8 flex items-center justify-between border-t border-border pt-6">
-              <p className="text-[12px] text-neutral-400">
-                請先登入後再填寫表單
-              </p>
-              <Link
-                href="/login"
-                className="inline-flex h-[38px] items-center rounded-full bg-primary px-5 text-[14px] font-[550] text-white transition-colors hover:bg-primary-light"
-              >
-                登入以提交
-              </Link>
-            </div>
-          </div>
+          {/* Interactive form */}
+          <FormClient formId={form_id} fields={sortedFields} />
         </div>
       </section>
     </PublicLayout>

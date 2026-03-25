@@ -29,21 +29,21 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Modal open={open} onClose={onClose}>
-      <div className="flex flex-col items-center text-center pt-2">
+      <div className="flex flex-col items-start pt-6">
         {variant === "danger" && (
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
             <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
           </div>
         )}
-        <h3 className="mt-4 text-lg font-semibold tracking-tight text-neutral-950">
+        <h3 className="text-lg font-semibold tracking-tight text-neutral-950">
           {title}
         </h3>
         {description && (
-          <p className="mt-2 text-sm text-neutral-500 max-w-[40ch]">
+          <p className="mt-2 text-sm text-neutral-500">
             {description}
           </p>
         )}
-        <div className="mt-6 flex justify-center gap-3">
+        <div className="mt-8 flex w-full justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -57,7 +57,7 @@ export function ConfirmDialog({
             disabled={loading}
             className={
               variant === "danger"
-                ? "!bg-red-600 hover:!bg-red-700 active:!bg-red-800"
+                ? "!bg-red-700 hover:!bg-red-800 active:!bg-red-900 shadow-sm"
                 : ""
             }
           >

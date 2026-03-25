@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
+
 
 const QUICK_NAV = [
   { label: "關於我們", href: "/about" },
@@ -12,7 +12,7 @@ const QUICK_NAV = [
 function FacebookIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.858-5.978.401 0 1.092.044 1.545.103v3.236h-1.098c-1.614 0-2.24.612-2.24 2.205v2.014h3.19l-.548 3.667h-2.642v8.112a12.008 12.008 0 0 0 9.146-9.191h-3.17a8.005 8.005 0 0 1-4.796 5.74v-5.74H9.101Z" />
+      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073Z" />
     </svg>
   );
 }
@@ -25,13 +25,6 @@ function InstagramIcon({ className }: { className?: string }) {
   );
 }
 
-function YouTubeIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.545 15.568V8.432L15.818 12l-6.273 3.568Z" />
-    </svg>
-  );
-}
 
 export function Footer() {
   return (
@@ -59,9 +52,8 @@ export function Footer() {
 
             <div className="mt-5 flex items-center gap-2">
               {[
-                { Icon: FacebookIcon, href: "#", label: "Facebook" },
-                { Icon: InstagramIcon, href: "#", label: "Instagram" },
-                { Icon: YouTubeIcon, href: "#", label: "YouTube" },
+                { Icon: FacebookIcon, href: "https://www.facebook.com/nckuca/", label: "Facebook" },
+                { Icon: InstagramIcon, href: "https://www.instagram.com/nca.ncku/", label: "Instagram" },
               ].map(({ Icon, href, label }) => (
                 <a
                   key={label}
@@ -115,15 +107,7 @@ export function Footer() {
                   成功大學 光復校區
                 </span>
               </li>
-              <li className="mt-1">
-                <Link
-                  href="/login"
-                  className="group inline-flex items-center gap-1 text-[13px] font-medium text-primary transition-colors hover:text-primary-dark"
-                >
-                  登入系統
-                  <ArrowLongRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </Link>
-              </li>
+
             </ul>
           </div>
         </div>

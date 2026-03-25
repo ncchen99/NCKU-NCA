@@ -11,7 +11,7 @@ import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 const modalSizeClass: Record<"default" | "wide", string> = {
-  default: "max-w-[480px]",
+  default: "max-w-[440px]",
   wide: "max-w-4xl",
 };
 

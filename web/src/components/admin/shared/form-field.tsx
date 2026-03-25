@@ -29,6 +29,8 @@ type SelectFieldProps = BaseFieldProps &
   SelectHTMLAttributes<HTMLSelectElement> & {
     as: "select";
     options: { value: string; label: string }[];
+    searchable?: boolean;
+    searchPlaceholder?: string;
   };
 
 type FormFieldProps = InputFieldProps | TextareaFieldProps | SelectFieldProps;
@@ -43,8 +45,18 @@ function SelectFieldInner({
   fieldProps: SelectFieldProps;
   error: boolean;
 }) {
-  const { options, onChange, className, value, disabled, id, name, autoFocus } =
-    fieldProps;
+  const {
+    options,
+    onChange,
+    className,
+    value,
+    disabled,
+    id,
+    name,
+    autoFocus,
+    searchable,
+    searchPlaceholder,
+  } = fieldProps;
 
   return (
     <AppSelect
@@ -63,6 +75,8 @@ function SelectFieldInner({
       invalid={hasError}
       aria-invalid={hasError || undefined}
       className={className}
+      searchable={searchable}
+      searchPlaceholder={searchPlaceholder}
     />
   );
 }
@@ -71,7 +85,7 @@ export function FormField(props: FormFieldProps) {
   const { label, error, required, hint, as = "input", ...rest } = props;
 
   return (
-    <div>
+    <div className="w-full">
       <label className="mb-1.5 block text-sm font-medium text-neutral-700">
         {label}
         {required && <span className="ml-0.5 text-red-500">*</span>}

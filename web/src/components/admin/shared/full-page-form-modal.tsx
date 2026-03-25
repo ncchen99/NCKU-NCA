@@ -102,14 +102,14 @@ export function FullPageFormModal({
       </div>
 
       <Modal open={confirmOpen} onClose={() => setConfirmOpen(false)} preventClose>
-        <div className="flex flex-col items-center text-center pt-6">
+        <div className="flex flex-col items-start pt-6">
           <h3 className="text-lg font-semibold tracking-tight text-neutral-950">
             確定要離開嗎？
           </h3>
           <p className="mt-2 text-sm text-neutral-500">
             尚未儲存的內容將會遺失。
           </p>
-          <div className="mt-6 flex justify-center gap-3">
+          <div className="mt-8 flex w-full justify-end gap-3">
             <button
               type="button"
               onClick={() => setConfirmOpen(false)}
@@ -119,9 +119,9 @@ export function FullPageFormModal({
             </button>
             <Button
               onClick={handleConfirmClose}
-              className="!bg-red-600 hover:!bg-red-700 active:!bg-red-800"
+              className="!bg-red-700 hover:!bg-red-800 active:!bg-red-900 shadow-sm"
             >
-              離開
+              不儲存並離開
             </Button>
           </div>
         </div>

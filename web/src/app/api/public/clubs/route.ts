@@ -7,13 +7,7 @@ import { getAllClubs } from "@/lib/firestore/clubs";
  */
 export async function GET(req: NextRequest) {
   try {
-    const category = req.nextUrl.searchParams.get("category")?.trim();
-    if (!category) {
-      return Response.json(
-        { error: "缺少 category 參數" },
-        { status: 400 },
-      );
-    }
+    const category = req.nextUrl.searchParams.get("category")?.trim() || undefined;
 
     const clubs = await getAllClubs({ category, isActive: true });
     return Response.json({

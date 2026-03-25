@@ -139,7 +139,7 @@ export default function NewsPage() {
                   <Link
                     key={item.id}
                     href={`/news/${item.slug}`}
-                    className="group overflow-hidden rounded-lg shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-shadow duration-150 hover:shadow-[0_0_0_1px_rgba(10,10,10,0.12),0_2px_8px_rgba(10,10,10,0.06)]"
+                    className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)] hover:-translate-y-0.5"
                   >
                     <div className="relative aspect-[16/9] bg-neutral-200">
                       {item.cover_image_url ? (
@@ -160,7 +160,7 @@ export default function NewsPage() {
                       <time className="font-mono text-[11px] text-neutral-400">
                         {item.published_at_display}
                       </time>
-                      <h3 className="mt-2 text-[14px] font-semibold tracking-tight text-neutral-950 group-hover:text-primary">
+                      <h3 className="mt-2 text-[14px] font-semibold tracking-tight text-neutral-950 group-hover:text-primary transition-colors">
                         {item.title}
                       </h3>
                       <p className="mt-1.5 line-clamp-2 text-[12px] text-neutral-600">
