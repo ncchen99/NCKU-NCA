@@ -35,9 +35,11 @@ body {
   margin-top: 2.5rem;
   margin-bottom: 1rem;
 }
+
 .cms-markdown h1:first-child {
   margin-top: 0;
 }
+
 .cms-markdown h2 {
   font-size: 1.25rem;
   font-weight: 700;
@@ -49,6 +51,7 @@ body {
   border-bottom: 1px solid var(--color-border);
   scroll-margin-top: 5rem;
 }
+
 .cms-markdown h3 {
   font-size: 1.05rem;
   font-weight: 650;
@@ -57,10 +60,12 @@ body {
   margin-bottom: 0.5rem;
   scroll-margin-top: 5rem;
 }
+
 .cms-markdown p {
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
 }
+
 .cms-markdown img {
   display: block;
   width: auto;
@@ -71,23 +76,28 @@ body {
   border-radius: 0.75rem;
   object-fit: contain;
 }
+
 .cms-markdown figure {
   max-width: 100%;
   margin: 1.25rem 0;
 }
+
 .cms-markdown figure img {
   margin: 0 auto;
 }
+
 .cms-markdown ul {
   list-style-type: disc;
   margin: 0.75rem 0;
   padding-left: 1.35rem;
 }
+
 .cms-markdown ol {
   list-style-type: decimal;
   margin: 0.75rem 0;
   padding-left: 1.35rem;
 }
+
 .cms-markdown ul ul,
 .cms-markdown ol ul,
 .cms-markdown ul ol,
@@ -95,23 +105,29 @@ body {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
+
 .cms-markdown li {
   margin: 0.35rem 0;
 }
+
 .cms-markdown a {
   color: var(--color-primary);
   text-decoration: none;
 }
+
 .cms-markdown .anchor-link {
   color: inherit;
 }
+
 .cms-markdown a:hover {
   color: var(--color-primary-light);
 }
+
 .cms-markdown a:not(.anchor-link):hover {
   text-decoration: underline;
   text-underline-offset: 4px;
 }
+
 .cms-markdown blockquote {
   margin: 1rem 0;
   padding: 0.75rem 1rem;
@@ -119,6 +135,7 @@ body {
   background: var(--color-neutral-50);
   color: var(--color-neutral-600);
 }
+
 .cms-markdown pre {
   margin: 1rem 0;
   padding: 1rem;
@@ -127,26 +144,31 @@ body {
   background: var(--color-neutral-100);
   font-size: 0.85rem;
 }
+
 .cms-markdown code {
   font-family: var(--font-mono);
   font-size: 0.9em;
 }
+
 .cms-markdown table {
   width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
   font-size: 0.9rem;
 }
+
 .cms-markdown th,
 .cms-markdown td {
   border: 1px solid var(--color-border);
   padding: 0.5rem 0.75rem;
   text-align: left;
 }
+
 .cms-markdown th {
   background: var(--color-neutral-50);
   font-weight: 600;
 }
+
 .cms-markdown hr {
   margin: 4.5rem auto;
   border: 0;
@@ -155,6 +177,7 @@ body {
   width: 100%;
   position: relative;
 }
+
 .cms-markdown hr::after {
   content: "";
   position: absolute;
@@ -230,4 +253,3 @@ body {
   transform: translateX(4px);
   opacity: 1;
 }
-

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProfileCompletionGate } from "@/components/layout/profile-completion-gate";
 import { buildOgImageUrl, getSiteUrl } from "@/lib/seo";
@@ -68,6 +69,7 @@ export default function RootLayout({
         <AuthProvider>
           <ProfileCompletionGate>{children}</ProfileCompletionGate>
         </AuthProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
