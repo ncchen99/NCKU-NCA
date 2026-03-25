@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   PlusIcon,
+  ArrowDownTrayIcon,
   CalendarDaysIcon,
   UserGroupIcon,
   CheckCircleIcon,
@@ -126,6 +127,40 @@ function tsToDatetimeLocal(
   return `${date.getFullYear()}-${p(date.getMonth() + 1)}-${p(date.getDate())}T${p(date.getHours())}:${p(date.getMinutes())}`;
 }
 
+function exportAttendanceCsv(detailData: AttendanceEventDetailResponse) {
+  const headers = ["社團名稱", "社團 ID", "類型", "狀態", "簽到時間"];
+  const rows = detailData.clubStatuses.map((club) => [
+    club.clubName,
+    club.clubId,
+    club.category,
+    club.checkedIn ? "已簽到" : "未簽到",
+    club.checkedIn && club.checkedInAt ? formatDateTime(club.checkedInAt) : "",
+  ]);
+
+  const csvContent = [headers, ...rows]
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(","),
+    )
+    .join("\n");
+
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${detailData.event.title}_簽到狀態_${new Date()
+    .toISOString()
+    .slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 export default function AttendancePage() {
   const [activeTab, setActiveTab] = useState<FilterStatus>("all");
   const [events, setEvents] = useState<EventWithStats[]>([]);
@@ -146,6 +181,7 @@ export default function AttendancePage() {
   const [detailData, setDetailData] =
     useState<AttendanceEventDetailResponse | null>(null);
   const [detailEvent, setDetailEvent] = useState<EventWithStats | null>(null);
+  const [manualCheckingClubId, setManualCheckingClubId] = useState<string | null>(null);
 
   const fetchEvents = useCallback(async (background = false) => {
     if (!background) setLoading(true);
@@ -306,6 +342,41 @@ export default function AttendancePage() {
     }
   }
 
+  const fetchDetail = useCallback(async (eventId: string) => {
+    const detail = await adminFetch<AttendanceEventDetailResponse>(
+      `/api/admin/attendance/${eventId}?includeClubStatuses=true`,
+    );
+    setDetailData(detail);
+  }, []);
+
+  const handleManualCheckIn = useCallback(
+    async (club: AttendanceClubStatus) => {
+      if (!detailEvent) return;
+      setManualCheckingClubId(club.clubId);
+      try {
+        await adminFetch<{ id: string }>(
+          `/api/admin/attendance/${detailEvent.id}/records`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              club_id: club.clubId,
+              reason: "管理員手動補點名",
+            }),
+          },
+        );
+
+        await Promise.all([fetchDetail(detailEvent.id), fetchEvents(true)]);
+        toast(`已為 ${club.clubName} 補點名`, "success");
+      } catch (err) {
+        toast(err instanceof Error ? err.message : "補點名失敗", "error");
+      } finally {
+        setManualCheckingClubId(null);
+      }
+    },
+    [detailEvent, fetchDetail, fetchEvents],
+  );
+
   const detailClubColumns = useMemo<ColumnDef<AttendanceClubStatus>[]>(
     () => [
       {
@@ -377,8 +448,33 @@ export default function AttendancePage() {
           tdClassName: "px-4 py-3 text-right",
         },
       },
+      {
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (row.original.checkedIn) return null;
+          const isLoading = manualCheckingClubId === row.original.clubId;
+          return (
+            <div className="text-right">
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => handleManualCheckIn(row.original)}
+                className="inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary hover:text-white disabled:opacity-60"
+              >
+                {isLoading ? "補點名中..." : "手動補點名"}
+              </button>
+            </div>
+          );
+        },
+        meta: {
+          thClassName: "px-4 py-3 text-right",
+          tdClassName: "px-4 py-3 text-right",
+        },
+      },
     ],
-    [],
+    [handleManualCheckIn, manualCheckingClubId],
   );
 
   async function openDetailModal(event: EventWithStats) {
@@ -389,10 +485,7 @@ export default function AttendancePage() {
     setDetailData(null);
 
     try {
-      const detail = await adminFetch<AttendanceEventDetailResponse>(
-        `/api/admin/attendance/${event.id}?includeClubStatuses=true`,
-      );
-      setDetailData(detail);
+      await fetchDetail(event.id);
     } catch (err) {
       setDetailError(err instanceof Error ? err.message : "載入點名詳情失敗");
     } finally {
@@ -757,9 +850,23 @@ export default function AttendancePage() {
                     <UserGroupIcon className="h-4 w-4 text-neutral-400" />
                     簽到狀態清單
                   </h4>
-                  <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
-                    共 {detailData.clubStatuses.length} 個社團
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-neutral-100 px-2.5 py-0.5 text-xs font-medium text-neutral-500">
+                      共 {detailData.clubStatuses.length} 個社團
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        exportAttendanceCsv(detailData);
+                        toast("CSV 已下載", "success");
+                      }}
+                      className="h-8"
+                    >
+                      <ArrowDownTrayIcon className="h-4 w-4" />
+                      匯出 CSV
+                    </Button>
+                  </div>
                 </div>
                 <div className="overflow-hidden rounded-lg border border-border">
                   <AdminDataTable
@@ -767,7 +874,7 @@ export default function AttendancePage() {
                     columns={detailClubColumns}
                     getRowId={(row) => row.clubId}
                     emptyMessage="尚未設定預計社團，或找不到對應社團資料。"
-                    emptyColSpan={4}
+                    emptyColSpan={5}
                     classNames={{
                       table: "w-full text-left text-sm",
                       theadTr: "bg-neutral-50",

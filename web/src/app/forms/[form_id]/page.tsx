@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PublicLayout } from "@/components/layout/public-layout";
 import { getForm } from "@/lib/firestore/forms";
 import { anyTimestampToDate, formatDateTimeZhTW } from "@/lib/datetime";
+import { buildOgImageUrl } from "@/lib/seo";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 import { FormClient } from "./form-client";
 
@@ -10,12 +11,33 @@ type Props = { params: Promise<{ form_id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { form_id } = await params;
+  const canonicalPath = `/forms/${form_id}`;
   try {
     const form = await getForm(form_id);
     if (!form) return { title: "表單未找到" };
+    const description = form.description?.substring(0, 160) ?? "社聯會線上表單";
+    const ogImage = buildOgImageUrl({
+      title: form.title,
+      subtitle: "線上表單",
+      path: canonicalPath,
+    });
+
     return {
       title: form.title,
-      description: form.description?.substring(0, 160) ?? "社聯會線上表單",
+      description,
+      alternates: {
+        canonical: canonicalPath,
+      },
+      openGraph: {
+        title: `${form.title} | 成大社聯會`,
+        description,
+        url: canonicalPath,
+        images: [ogImage],
+      },
+      twitter: {
+        card: "summary_large_image",
+        images: [ogImage],
+      },
     };
   } catch {
     return { title: "表單未找到" };

@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
@@ -51,6 +53,54 @@ const statusConfig: Record<
   paid: { variant: "success", label: "已繳" },
   returned: { variant: "neutral", label: "已退還" },
 };
+
+function downloadDepositCsv(records: DepositRecord[]) {
+  const headers = [
+    "社團",
+    "社團 ID",
+    "狀態",
+    "金額",
+    "繳費日期",
+    "退還日期",
+    "備註",
+    "更新者",
+  ];
+
+  const rows = records.map((record) => {
+    const statusLabel = statusConfig[record.status]?.label ?? record.status;
+    return [
+      record.club_name ?? "",
+      record.club_id,
+      statusLabel,
+      String(record.amount),
+      formatTimestamp(record.paid_at as Parameters<typeof formatTimestamp>[0]),
+      formatTimestamp(record.returned_at as Parameters<typeof formatTimestamp>[0]),
+      record.notes ?? "",
+      record.updated_by,
+    ];
+  });
+
+  const csvContent = [headers, ...rows]
+    .map((row) =>
+      row
+        .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+        .join(","),
+    )
+    .join("\n");
+
+  const bom = "\uFEFF";
+  const blob = new Blob([bom + csvContent], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `保證金紀錄_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 
 export default function DepositPage() {
   const [activeTab, setActiveTab] = useState<DepositStatus>("all");
@@ -391,6 +441,19 @@ export default function DepositPage() {
           !loading && !error
             ? `待繳總額 $${pendingTotal.toLocaleString()}`
             : undefined
+        }
+        action={
+          <Button
+            variant="ghost"
+            onClick={() => {
+              downloadDepositCsv(filtered);
+              toast("CSV 已下載", "success");
+            }}
+            disabled={loading || !!error || filtered.length === 0}
+          >
+            <ArrowDownTrayIcon className="h-4 w-4" />
+            匯出 CSV
+          </Button>
         }
       />
 

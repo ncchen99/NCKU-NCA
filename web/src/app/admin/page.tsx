@@ -42,6 +42,7 @@ interface DashboardData {
     records: DepositRecord[];
   };
   latestResponses: Array<{
+    form_id?: string;
     form_title?: string;
     club_id?: string;
     club_name?: string;
@@ -95,24 +96,12 @@ export default function AdminDashboard() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (error) {
-    return (
-      <>
-        <AdminPageHeader
-          title="Dashboard"
-          subtitle="成功大學社團聯合會管理後台總覽"
-        />
-        <AdminErrorBanner message={`載入失敗：${error}`} />
-      </>
-    );
-  }
-
   const attendanceEvent = data?.openAttendanceEvents?.[0];
   const attendanceRate =
     attendanceEvent?.stats && attendanceEvent.stats.total > 0
       ? Math.round(
-          (attendanceEvent.stats.checkedIn / attendanceEvent.stats.total) * 100
-        )
+        (attendanceEvent.stats.checkedIn / attendanceEvent.stats.total) * 100
+      )
       : 0;
 
   const stats: StatCardDef[] = [
@@ -195,6 +184,23 @@ export default function AdminDashboard() {
         ),
         meta: { thClassName: "px-5 text-right", tdClassName: "px-5 text-right" },
       },
+      {
+        id: "link",
+        header: "",
+        enableSorting: false,
+        cell: ({ row }) => {
+          if (!row.original.form_id) return null;
+          return (
+            <Link
+              href={`/admin/forms/${row.original.form_id}`}
+              className="inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+            >
+              查看回覆
+            </Link>
+          );
+        },
+        meta: { thClassName: "px-5 text-right", tdClassName: "px-5 text-right" },
+      },
     ],
     [],
   );
@@ -271,6 +277,18 @@ export default function AdminDashboard() {
       "group border-b border-border/50 last:border-0 hover:bg-primary/5",
   } as const;
 
+  if (error) {
+    return (
+      <>
+        <AdminPageHeader
+          title="Dashboard"
+          subtitle="成功大學社團聯合會管理後台總覽"
+        />
+        <AdminErrorBanner message={`載入失敗：${error}`} />
+      </>
+    );
+  }
+
   return (
     <>
       <AdminPageHeader
@@ -334,7 +352,7 @@ export default function AdminDashboard() {
                 columns={dashboardResponseColumns}
                 getRowId={(_, i) => `resp-${i}`}
                 emptyMessage="尚無表單回覆"
-                emptyColSpan={3}
+                emptyColSpan={4}
                 classNames={{
                   table: "w-full text-left text-[13px]",
                   ...dashboardTableClassNames,

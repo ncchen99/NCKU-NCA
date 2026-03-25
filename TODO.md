@@ -116,10 +116,10 @@
 
 ### 2.8 SEO
 - [x] 每頁 title / description / og 基礎設定
-- [ ] `/sitemap.xml` 生成
-- [ ] `/robots.txt`
-- [ ] Canonical URL
-- [ ] 動態 og:image（next/og）
+- [x] `/sitemap.xml` 生成
+- [x] `/robots.txt`
+- [x] Canonical URL
+- [x] 動態 og:image（next/og）
 
 ---
 
@@ -151,7 +151,7 @@
 - [x] 表單欄位拖曳排序（JSON Schema 編輯器）
 - [x] 條件邏輯設定 UI
 - [x] 表單模板（社博 / 寒假場協 / 一般報名 / 出席調查）
-- [ ] 回覆管理頁面 `/admin/forms/[form_id]/responses`
+- [ ] 回覆管理頁面 `/admin/forms/[form_id]`
 - [ ] 回覆匯出 CSV
 
 ### 3.5 保證金管理 `/admin/deposit`
@@ -159,7 +159,7 @@
 - [x] 狀態機操作（pending → paid → returned）接入 Firestore
 - [x] 批次操作 Toolbar（checkbox 多選 + 批次標記/退還）
 - [x] 備註編輯 Modal
-- [ ] CSV 匯出
+- [x] CSV 匯出
 
 ### 3.6 點名管理 `/admin/attendance`
 - [x] 點名事件列表 UI（Cards Grid + 進度條 + mock data）
@@ -168,8 +168,8 @@
 - [x] 狀態快速切換（upcoming→open→closed）
 - [ ] 事件詳頁（`/admin/attendance/[event_id]`）
 - [ ] 即時出席統計 + 出席列表
-- [ ] 手動補點名 Modal
-- [ ] CSV 匯出
+- [x] 手動補點名 Modal
+- [x] CSV 匯出
 
 ### 3.7 社團名單管理 `/admin/clubs`
 - [x] 社團列表 UI（分類 tabs + 搜尋 + 表格 + mock data）
@@ -177,8 +177,8 @@
 - [x] JSON 匯入流程 Modal（上傳 → 預覽 → 結果）
 - [x] Firestore 批次寫入
 - [x] 新增單一社團 API Route（GET/PUT `/api/admin/clubs/[clubId]`）
-- [ ] YAML 匯入支援
-- [ ] YAML / JSON 匯出
+- [x] YAML 匯入支援
+- [x] YAML / JSON 匯出
 
 ### 3.8 用戶管理 `/admin/users`
 - [x] 用戶列表 UI（角色 tabs + 表格 + mock data）
@@ -195,7 +195,7 @@
 - [x] `/api/auth/claims` — Custom Claims RBAC
 - [ ] `/api/forms/[form_id]/submit` — 表單提交（含防重複 Transaction）
 - [x] `/api/attendance/checkin` — 點名提交（含防重複 Transaction）
-- [ ] `/api/clubs/import` — 社團 YAML/JSON 匯入
+- [x] `/api/clubs/import` — 社團 YAML/JSON 匯入
 - [ ] `/api/export/csv` — CSV 匯出通用接口
 
 ### 4.2 Firestore 資料層
@@ -236,7 +236,7 @@
 
 ## Phase 5：SEO 優化與上線準備
 
-- [ ] Sitemap.xml + Robots.txt
+- [x] Sitemap.xml + Robots.txt
 - [ ] 效能優化（Firestore 索引、ISR revalidate 間隔）
 - [ ] Lighthouse 審查（Performance / Accessibility / SEO）
 - [ ] 安全性審查（XSS / CSRF / Token 保護）

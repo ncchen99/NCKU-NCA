@@ -8,6 +8,7 @@ import {
   CHARTER_DOCUMENTS,
   type CharterDocumentSlug,
 } from "@/lib/charter-documents";
+import { buildOgImageUrl } from "@/lib/seo";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -18,11 +19,33 @@ function isCharterSlug(s: string): s is CharterDocumentSlug {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   if (!isCharterSlug(slug)) return { title: "組織章程" };
+
+  const canonicalPath = `/charter/${slug}`;
   const doc = CHARTER_DOCUMENTS.find((d) => d.slug === slug)!;
   const content = await getSiteContent(slug);
+  const pageTitle = content?.title ?? doc.title;
+  const ogImage = buildOgImageUrl({
+    title: pageTitle,
+    subtitle: "組織章程",
+    path: canonicalPath,
+  });
+
   return {
-    title: content?.title ?? doc.title,
+    title: pageTitle,
     description: doc.description,
+    alternates: {
+      canonical: canonicalPath,
+    },
+    openGraph: {
+      title: `${pageTitle} | 成大社聯會`,
+      description: doc.description,
+      url: canonicalPath,
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [ogImage],
+    },
   };
 }
 

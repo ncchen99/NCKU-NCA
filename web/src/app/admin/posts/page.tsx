@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import Image from "next/image";
 import {
   PlusIcon,
   PencilSquareIcon,
@@ -50,6 +51,7 @@ interface PostForm {
   slug: string;
   category: "news" | "activity_review";
   status: "draft" | "published";
+  cover_image_url: string;
   content_markdown: string;
   tags: string;
 }
@@ -59,6 +61,7 @@ const EMPTY_FORM: PostForm = {
   slug: "",
   category: "news",
   status: "draft",
+  cover_image_url: "",
   content_markdown: "",
   tags: "",
 };
@@ -126,12 +129,12 @@ export default function PostsPage() {
     [],
   );
   const [tagStatsLoading, setTagStatsLoading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
   const tagSuggestRootRef = useRef<HTMLDivElement>(null);
+  const coverFileInputRef = useRef<HTMLInputElement>(null);
 
   // Form embedding state
   const [forms, setForms] = useState<{ id: string; title: string }[]>([]);
-  const [selectedFormToInsert, setSelectedFormToInsert] = useState("");
-
   // Delete state
   const [deleteTarget, setDeleteTarget] = useState<Post | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -250,6 +253,7 @@ export default function PostsPage() {
         slug: full.slug,
         category: full.category,
         status: full.status,
+        cover_image_url: full.cover_image_url ?? "",
         content_markdown: full.content_markdown ?? "",
         tags: Array.isArray(full.tags) ? full.tags.join(", ") : "",
       });
@@ -272,6 +276,7 @@ export default function PostsPage() {
         slug: form.slug.trim(),
         category: form.category,
         status: form.status,
+        cover_image_url: form.cover_image_url.trim() || null,
         content_markdown: form.content_markdown,
         tags: form.tags
           .split(",")
@@ -368,6 +373,31 @@ export default function PostsPage() {
   function addTag(tag: string) {
     const nextTags = [...selectedTags, tag];
     updateForm({ tags: nextTags.join(", ") });
+  }
+
+  async function handleCoverUpload(file: File) {
+    setCoverUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/uploads/image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "封面圖片上傳失敗");
+      }
+      updateForm({ cover_image_url: data.url });
+      toast("封面圖片已上傳", "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "封面圖片上傳失敗", "error");
+    } finally {
+      setCoverUploading(false);
+      if (coverFileInputRef.current) {
+        coverFileInputRef.current.value = "";
+      }
+    }
   }
 
   const postColumns = useMemo<ColumnDef<Post>[]>(
@@ -650,6 +680,54 @@ export default function PostsPage() {
                 多個標籤請用逗號分隔，也可點上方推薦快速加入
               </p>
             </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+              封面圖片 URL
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                value={form.cover_image_url}
+                onChange={(e) =>
+                  updateForm({ cover_image_url: (e.target as HTMLInputElement).value })
+                }
+                placeholder="https://..."
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] text-neutral-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <input
+                ref={coverFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  void handleCoverUpload(file);
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                disabled={coverUploading}
+                onClick={() => coverFileInputRef.current?.click()}
+              >
+                {coverUploading ? "上傳中..." : "上傳圖片"}
+              </Button>
+            </div>
+            <p className="mt-1 text-xs text-neutral-400">
+              上傳後會自動壓縮並轉為 WebP，儲存於 Firebase Storage。
+            </p>
+            {form.cover_image_url && (
+              <Image
+                src={form.cover_image_url}
+                alt="封面預覽"
+                width={640}
+                height={320}
+                unoptimized
+                className="mt-3 max-h-40 w-auto rounded-lg border border-border object-cover"
+              />
+            )}
           </div>
 
 

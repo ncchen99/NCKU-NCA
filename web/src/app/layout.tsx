@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/lib/auth-context";
 import { ProfileCompletionGate } from "@/components/layout/profile-completion-gate";
+import { buildOgImageUrl, getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -15,16 +16,40 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: getSiteUrl(),
   title: {
     default: "成功大學社團聯合會 NCA",
     template: "%s | 成大社聯會",
   },
   description:
     "國立成功大學社團聯合會官方數位平台。提供公告資訊、表單報名、點名管理一站式服務。",
+  alternates: {
+    canonical: "./",
+  },
   openGraph: {
     type: "website",
     locale: "zh_TW",
     siteName: "成功大學社團聯合會",
+    images: [
+      {
+        url: buildOgImageUrl({
+          title: "成功大學社團聯合會",
+          subtitle: "NCKU NCA 官方平台",
+          path: "/",
+        }),
+        width: 1200,
+        height: 630,
+        alt: "成功大學社團聯合會 NCA",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: [buildOgImageUrl({
+      title: "成功大學社團聯合會",
+      subtitle: "NCKU NCA 官方平台",
+      path: "/",
+    })],
   },
 };
 

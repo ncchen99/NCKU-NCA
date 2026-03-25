@@ -5,6 +5,13 @@ import type { Form, FormResponse } from "@/types";
 const COLLECTION = "forms";
 const RESPONSES_SUB = "responses";
 
+export class DuplicateFormSubmissionError extends Error {
+  constructor(message = "此社團已提交過此表單") {
+    super(message);
+    this.name = "DuplicateFormSubmissionError";
+  }
+}
+
 export async function getForm(formId: string): Promise<Form | null> {
   try {
     const db = getAdminDb();
@@ -106,16 +113,22 @@ export async function deleteForm(formId: string): Promise<void> {
 /* ─── Form Responses (sub-collection) ─── */
 
 export async function getFormResponses(
-  formId: string
+  formId: string,
+  options?: { limit?: number }
 ): Promise<FormResponse[]> {
   try {
     const db = getAdminDb();
-    const snapshot = await db
+    let query = db
       .collection(COLLECTION)
       .doc(formId)
       .collection(RESPONSES_SUB)
-      .orderBy("submitted_at", "desc")
-      .get();
+      .orderBy("submitted_at", "desc") as FirebaseFirestore.Query;
+
+    if (options?.limit && options.limit > 0) {
+      query = query.limit(options.limit);
+    }
+
+    const snapshot = await query.get();
     return snapshot.docs.map(
       (doc) => ({ id: doc.id, ...doc.data() }) as FormResponse
     );
@@ -151,7 +164,7 @@ export async function getFormResponseByClub(
 
 export async function submitFormResponse(
   formId: string,
-  data: Omit<FormResponse, "id" | "submitted_at" | "is_duplicate_attempt">
+  data: Omit<FormResponse, "id" | "submitted_at" | "is_duplicate_attempt">,
 ): Promise<string> {
   try {
     const db = getAdminDb();
@@ -166,13 +179,7 @@ export async function submitFormResponse(
       );
 
       if (!existing.empty) {
-        const dupRef = responsesRef.doc();
-        tx.set(dupRef, {
-          ...data,
-          submitted_at: FieldValue.serverTimestamp(),
-          is_duplicate_attempt: true,
-        });
-        return dupRef.id;
+        throw new DuplicateFormSubmissionError();
       }
 
       const newRef = responsesRef.doc();

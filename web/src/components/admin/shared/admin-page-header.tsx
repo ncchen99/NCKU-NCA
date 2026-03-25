@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 
 interface AdminPageHeaderProps {
   title: string;
-  subtitle?: string;
+  subtitle?: ReactNode;
   count?: number;
   action?: ReactNode;
 }
@@ -26,9 +26,7 @@ export function AdminPageHeader({
             </span>
           )}
         </h1>
-        {subtitle && (
-          <p className="mt-1 text-sm text-neutral-500">{subtitle}</p>
-        )}
+        {subtitle ? <div className="mt-1 text-sm text-neutral-500">{subtitle}</div> : null}
       </div>
       {action && <div className="flex items-center gap-2">{action}</div>}
     </div>

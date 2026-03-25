@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowUpTrayIcon,
+  ArrowDownTrayIcon,
   PencilSquareIcon,
   DocumentArrowUpIcon,
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
+import yaml from "js-yaml";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -75,6 +77,7 @@ function clubToForm(club: Club): ClubForm {
 }
 
 type ImportStep = "upload" | "preview" | "result";
+type ImportFormat = "yaml" | "json";
 
 interface ImportResult {
   created: number;
@@ -99,6 +102,7 @@ export default function ClubsPage() {
   const [importOpen, setImportOpen] = useState(false);
   const [importStep, setImportStep] = useState<ImportStep>("upload");
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [importFormat, setImportFormat] = useState<ImportFormat>("yaml");
   const [importData, setImportData] = useState<Record<string, unknown>[]>([]);
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
@@ -197,6 +201,7 @@ export default function ClubsPage() {
   const openImport = () => {
     setImportStep("upload");
     setImportFile(null);
+    setImportFormat("yaml");
     setImportData([]);
     setImportError(null);
     setImportResult(null);
@@ -212,16 +217,48 @@ export default function ClubsPage() {
     setImportError(null);
     try {
       const text = await file.text();
-      const parsed = JSON.parse(text);
+      const lower = file.name.toLowerCase();
+      const format: ImportFormat =
+        lower.endsWith(".yaml") || lower.endsWith(".yml") ? "yaml" : "json";
+
+      const parsed =
+        format === "yaml"
+          ? (yaml.load(text) as Record<string, unknown> | Record<string, unknown>[])
+          : (JSON.parse(text) as Record<string, unknown> | Record<string, unknown>[]);
       const arr = Array.isArray(parsed) ? parsed : parsed.clubs;
       if (!Array.isArray(arr) || arr.length === 0) {
-        setImportError("JSON 檔案中找不到有效的社團資料陣列");
+        setImportError("檔案中找不到有效的社團資料陣列（clubs）");
         return;
       }
+      setImportFormat(format);
       setImportData(arr);
       setImportStep("preview");
     } catch {
-      setImportError("JSON 格式解析失敗，請確認檔案格式正確");
+      setImportError("檔案解析失敗，請確認 YAML/JSON 格式正確");
+    }
+  };
+
+  const handleExport = async (format: ImportFormat) => {
+    try {
+      const res = await fetch(`/api/admin/clubs/export?format=${format}`);
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "匯出失敗");
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ext = format === "yaml" ? "yaml" : "json";
+      a.href = url;
+      a.download = `clubs_export_${new Date().toISOString().slice(0, 10)}.${ext}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast(`${format.toUpperCase()} 已下載`, "success");
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "匯出失敗", "error");
     }
   };
 
@@ -368,7 +405,7 @@ export default function ClubsPage() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clubs: importData }),
+          body: JSON.stringify({ clubs: importData, format: importFormat }),
         },
       );
       setImportResult(result);
@@ -389,10 +426,20 @@ export default function ClubsPage() {
         title="社團名單"
         count={loading || error ? undefined : clubs.length}
         action={
-          <Button onClick={openImport}>
-            <ArrowUpTrayIcon className="h-4 w-4" />
-            匯入名單
-          </Button>
+          <>
+            <Button variant="ghost" onClick={() => handleExport("yaml")}>
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              匯出 YAML
+            </Button>
+            <Button variant="ghost" onClick={() => handleExport("json")}>
+              <ArrowDownTrayIcon className="h-4 w-4" />
+              匯出 JSON
+            </Button>
+            <Button onClick={openImport}>
+              <ArrowUpTrayIcon className="h-4 w-4" />
+              匯入名單
+            </Button>
+          </>
         }
       />
 
@@ -522,7 +569,7 @@ export default function ClubsPage() {
         {importStep === "upload" && (
           <div className="space-y-4">
             <p className="text-sm text-neutral-500">
-              請選擇 JSON 格式的社團名單檔案。檔案格式可為陣列或包含{" "}
+              請選擇 YAML 或 JSON 格式的社團名單檔案。檔案格式可為陣列或包含{" "}
               <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs font-mono">
                 clubs
               </code>{" "}
@@ -532,7 +579,7 @@ export default function ClubsPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".json"
+              accept=".yaml,.yml,.json"
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
@@ -548,7 +595,7 @@ export default function ClubsPage() {
               <DocumentArrowUpIcon className="h-10 w-10" />
               <span className="text-sm font-medium">點擊選擇檔案</span>
               <span className="text-xs text-neutral-400">
-                支援 .json 格式
+                支援 .yaml .yml .json 格式
               </span>
             </button>
 
@@ -567,7 +614,7 @@ export default function ClubsPage() {
                 已讀取檔案：{importFile?.name}
               </p>
               <p className="mt-1 text-sm text-blue-600">
-                共 {importData.length} 筆社團資料準備匯入
+                格式：{importFormat.toUpperCase()}，共 {importData.length} 筆社團資料準備匯入
               </p>
             </div>
 

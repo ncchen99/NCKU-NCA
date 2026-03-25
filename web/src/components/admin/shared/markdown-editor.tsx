@@ -8,17 +8,18 @@ import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
 import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
-import { 
-  ChevronDownIcon, 
-  HashtagIcon, 
-  BoldIcon, 
-  CodeBracketIcon, 
+import {
+  ChevronDownIcon,
+  HashtagIcon,
+  BoldIcon,
+  CodeBracketIcon,
   SquaresPlusIcon,
   ItalicIcon,
   ListBulletIcon,
   NumberedListIcon,
   LinkIcon,
   PhotoIcon,
+  ArrowUpTrayIcon,
   ChatBubbleBottomCenterTextIcon,
   MinusIcon,
   TableCellsIcon,
@@ -48,8 +49,11 @@ export function MarkdownEditor({
 }: MarkdownEditorProps) {
   const [html, setHtml] = useState("");
   const [formMenuOpen, setFormMenuOpen] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [imageUploadError, setImageUploadError] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const containerRef = useRef<HTMLDivElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const render = useCallback(async (md: string) => {
     try {
@@ -101,6 +105,35 @@ export function MarkdownEditor({
     }, 0);
   };
 
+  const uploadImage = async (file: File) => {
+    setImageUploadError("");
+    setImageUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/uploads/image", {
+        method: "POST",
+        body: formData,
+      });
+      const data = (await res.json()) as { url?: string; error?: string };
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.error || "圖片上傳失敗");
+      }
+
+      const alt = file.name.replace(/\.[^/.]+$/, "") || "圖片";
+      insertText(`![${alt}](${data.url})`);
+    } catch (error) {
+      setImageUploadError(error instanceof Error ? error.message : "圖片上傳失敗");
+    } finally {
+      setImageUploading(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
+    }
+  };
+
   return (
     <div ref={containerRef}>
       <label className="mb-1.5 block text-sm font-medium text-neutral-700">
@@ -138,9 +171,20 @@ export function MarkdownEditor({
                 }}
               />
             </div>
-            
+
             {/* Toolbar */}
             <div className="flex flex-wrap items-center gap-0.5 border-t border-border bg-white p-1">
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  void uploadImage(file);
+                }}
+              />
               <div className="flex items-center">
                 <button
                   type="button"
@@ -247,28 +291,34 @@ export function MarkdownEditor({
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertText("![描述](", ")")}
+                  onClick={() => imageInputRef.current?.click()}
                   title="圖片"
-                  className="flex h-8 w-8 items-center justify-center rounded text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                  disabled={imageUploading}
+                  className="flex h-8 items-center justify-center gap-1 rounded px-2 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <PhotoIcon className="h-4 w-4" />
+                  {imageUploading ? (
+                    <ArrowUpTrayIcon className="h-4 w-4 animate-bounce" />
+                  ) : (
+                    <span className="text-[11px] font-medium">上傳</span>
+                  )}
                 </button>
               </div>
 
               <div className="mx-1 h-4 w-px bg-border" />
-              
+
               {/* Form Selection */}
               <div className="relative">
                 <button
                   type="button"
                   onClick={() => setFormMenuOpen(!formMenuOpen)}
-                  className={`flex h-8 items-center gap-1 rounded bg-neutral-50 px-2 text-[12px] font-medium transition-colors hover:bg-neutral-100 ${formMenuOpen ? 'bg-neutral-100 text-primary' : 'text-neutral-600' }`}
+                  className={`flex h-8 items-center gap-1 rounded bg-neutral-50 px-2 text-[12px] font-medium transition-colors hover:bg-neutral-100 ${formMenuOpen ? 'bg-neutral-100 text-primary' : 'text-neutral-600'}`}
                 >
                   <SquaresPlusIcon className="h-4 w-4" />
                   嵌入表單
                   <ChevronDownIcon className={`h-3 w-3 transition-transform ${formMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 {formMenuOpen && (
                   <div className="absolute bottom-full left-0 mb-2 w-56 flex-col overflow-hidden rounded-lg border border-border bg-white shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-150 z-50">
                     <div className="border-b border-border bg-neutral-50/50 px-3 py-1.5 text-[11px] font-semibold text-neutral-400">
@@ -297,6 +347,11 @@ export function MarkdownEditor({
                 )}
               </div>
             </div>
+            {imageUploadError && (
+              <div className="border-t border-red-200 bg-red-50 px-3 py-2 text-[12px] text-red-600">
+                {imageUploadError}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col">

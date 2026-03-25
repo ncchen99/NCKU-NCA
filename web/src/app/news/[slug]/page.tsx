@@ -5,6 +5,7 @@ import { PublicLayout } from "@/components/layout/public-layout";
 import { CmsMarkdownWithToc } from "@/components/public/cms-markdown-with-toc";
 import { getPostBySlug, getPublishedPosts, getAllPostSlugs } from "@/lib/firestore/posts";
 import { anyTimestampToDate } from "@/lib/datetime";
+import { buildOgImageUrl } from "@/lib/seo";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -20,15 +21,32 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
+  const canonicalPath = `/news/${slug}`;
   try {
     const post = await getPostBySlug(slug);
     if (!post) return { title: "文章未找到" };
+    const description = `${post.title} — 成大社聯會最新消息`;
+    const ogImage = buildOgImageUrl({
+      title: post.title,
+      subtitle: "最新消息",
+      path: canonicalPath,
+    });
+
     return {
       title: post.title,
-      description: `${post.title} — 成大社聯會最新消息`,
+      description,
+      alternates: {
+        canonical: canonicalPath,
+      },
       openGraph: {
         title: `${post.title} | 成大社聯會`,
-        description: `${post.title} — 成大社聯會最新消息`,
+        description,
+        url: canonicalPath,
+        images: [ogImage],
+      },
+      twitter: {
+        card: "summary_large_image",
+        images: [ogImage],
       },
     };
   } catch {
