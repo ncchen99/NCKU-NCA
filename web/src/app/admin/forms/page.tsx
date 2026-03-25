@@ -577,8 +577,8 @@ export default function FormsPage() {
             type="button"
             onClick={() => setFormModalTab("basic")}
             className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${formModalTab === "basic"
-                ? "bg-white text-neutral-950 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-700"
+              ? "bg-white text-neutral-950 shadow-sm"
+              : "text-neutral-500 hover:text-neutral-700"
               }`}
           >
             基本設定
@@ -587,8 +587,8 @@ export default function FormsPage() {
             type="button"
             onClick={() => setFormModalTab("fields")}
             className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-colors ${formModalTab === "fields"
-                ? "bg-white text-neutral-950 shadow-sm"
-                : "text-neutral-500 hover:text-neutral-700"
+              ? "bg-white text-neutral-950 shadow-sm"
+              : "text-neutral-500 hover:text-neutral-700"
               }`}
           >
             欄位編輯

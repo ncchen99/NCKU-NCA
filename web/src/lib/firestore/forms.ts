@@ -1,5 +1,5 @@
 import { getAdminDb } from "@/lib/firebase-admin";
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import type { Form, FormResponse } from "@/types";
 
 const COLLECTION = "forms";
@@ -63,6 +63,47 @@ export async function getAllForms(
   } catch (error) {
     throw new Error(
       `Failed to get all forms: ${error instanceof Error ? error.message : error}`
+    );
+  }
+}
+
+function chunkArray<T>(items: T[], size: number): T[][] {
+  if (size <= 0) return [items];
+  const chunks: T[][] = [];
+  for (let i = 0; i < items.length; i += size) {
+    chunks.push(items.slice(i, i + size));
+  }
+  return chunks;
+}
+
+export async function getFormTitleMapByIds(
+  formIds: string[]
+): Promise<Map<string, string>> {
+  try {
+    const uniqueIds = [...new Set(formIds.filter(Boolean))];
+    if (uniqueIds.length === 0) return new Map();
+
+    const db = getAdminDb();
+    const titleById = new Map<string, string>();
+
+    for (const chunk of chunkArray(uniqueIds, 10)) {
+      const snapshot = await db
+        .collection(COLLECTION)
+        .where(FieldPath.documentId(), "in", chunk)
+        .get();
+
+      for (const doc of snapshot.docs) {
+        const title = doc.data().title;
+        if (typeof title === "string" && title.trim()) {
+          titleById.set(doc.id, title);
+        }
+      }
+    }
+
+    return titleById;
+  } catch (error) {
+    throw new Error(
+      `Failed to get form titles by IDs: ${error instanceof Error ? error.message : error}`
     );
   }
 }
@@ -165,6 +206,10 @@ export async function getFormResponseByClub(
 export async function submitFormResponse(
   formId: string,
   data: Omit<FormResponse, "id" | "submitted_at" | "is_duplicate_attempt">,
+  options?: {
+    depositPolicy?: Form["deposit_policy"];
+    updatedByUid?: string;
+  },
 ): Promise<string> {
   try {
     const db = getAdminDb();
@@ -172,6 +217,7 @@ export async function submitFormResponse(
       .collection(COLLECTION)
       .doc(formId)
       .collection(RESPONSES_SUB);
+    const depositsRef = db.collection("deposit_records");
 
     return await db.runTransaction(async (tx) => {
       const existing = await tx.get(
@@ -188,9 +234,37 @@ export async function submitFormResponse(
         submitted_at: FieldValue.serverTimestamp(),
         is_duplicate_attempt: false,
       });
+
+      const depositAmount = options?.depositPolicy?.amount;
+      const requiresDeposit =
+        options?.depositPolicy?.required === true &&
+        typeof depositAmount === "number" &&
+        Number.isFinite(depositAmount) &&
+        depositAmount > 0;
+
+      if (requiresDeposit) {
+        const depositRef = depositsRef.doc();
+        const depositPayload: Record<string, unknown> = {
+          club_id: data.club_id,
+          status: "pending_payment",
+          amount: depositAmount,
+          updated_by: options?.updatedByUid ?? data.submitted_by_uid,
+        };
+
+        if (options?.depositPolicy?.binding_mode === "linked_to_response") {
+          depositPayload.form_id = formId;
+          depositPayload.form_response_id = newRef.id;
+        }
+
+        tx.set(depositRef, depositPayload);
+      }
+
       return newRef.id;
     });
   } catch (error) {
+    if (error instanceof DuplicateFormSubmissionError) {
+      throw error;
+    }
     throw new Error(
       `Failed to submit response for form "${formId}": ${error instanceof Error ? error.message : error}`
     );

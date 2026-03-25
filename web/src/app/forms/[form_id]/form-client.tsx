@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { createLoginHref } from "@/lib/login-redirect";
 import { ClubSearchSelect } from "@/components/shared/club-search-select";
+import { AppSelect } from "@/components/ui/app-select";
 import type { FormField } from "@/types";
 
 /* ─── 欄位型別中文 ─── */
@@ -93,64 +94,72 @@ function FormFieldInput({
           error={!!error}
         />
       ) : field.type === "select" ? (
-        <select
-          className={inputClasses}
+        <AppSelect
           value={strVal}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={onChange}
+          options={(field.options ?? []).map((opt) => ({ value: opt, label: opt }))}
+          placeholder={field.placeholder || "請選擇..."}
+          invalid={!!error}
         >
-          <option value="">
-            {field.placeholder || "請選擇..."}
-          </option>
-          {(field.options ?? []).map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
+        </AppSelect>
       ) : field.type === "radio" ? (
-        <div className="flex flex-wrap items-center gap-4 py-1">
-          {(field.options ?? ["是", "否"]).map((opt) => (
-            <label
-              key={opt}
-              className="flex cursor-pointer items-center gap-1.5 text-[13px] text-neutral-700"
-            >
-              <input
-                type="radio"
-                name={field.id}
-                className="h-4 w-4 accent-primary"
-                checked={strVal === opt}
-                onChange={() => onChange(opt)}
-              />
-              {opt}
-            </label>
-          ))}
-        </div>
-      ) : field.type === "checkbox" ? (
-        <div className="flex flex-wrap items-center gap-4 py-1">
-          {(field.options ?? []).map((opt) => {
-            const arr = Array.isArray(value) ? (value as string[]) : [];
-            const checked = arr.includes(opt);
-            return (
+        <div
+          className={
+            "rounded-lg border bg-white px-3 py-2 " +
+            (error ? "border-red-400" : "border-border")
+          }
+        >
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {(field.options ?? ["是", "否"]).map((opt) => (
               <label
                 key={opt}
-                className="flex cursor-pointer items-center gap-1.5 text-[13px] text-neutral-700"
+                className="flex cursor-pointer items-start gap-2 text-[13px] leading-5 text-neutral-700"
               >
                 <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-primary rounded"
-                  checked={checked}
-                  onChange={() => {
-                    if (checked) {
-                      onChange(arr.filter((v) => v !== opt));
-                    } else {
-                      onChange([...arr, opt]);
-                    }
-                  }}
+                  type="radio"
+                  name={field.id}
+                  className="mt-[2px] h-4 w-4 shrink-0 accent-primary"
+                  checked={strVal === opt}
+                  onChange={() => onChange(opt)}
                 />
-                {opt}
+                <span>{opt}</span>
               </label>
-            );
-          })}
+            ))}
+          </div>
+        </div>
+      ) : field.type === "checkbox" ? (
+        <div
+          className={
+            "rounded-lg border bg-white px-3 py-2 " +
+            (error ? "border-red-400" : "border-border")
+          }
+        >
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {(field.options ?? []).map((opt) => {
+              const arr = Array.isArray(value) ? (value as string[]) : [];
+              const checked = arr.includes(opt);
+              return (
+                <label
+                  key={opt}
+                  className="flex cursor-pointer items-start gap-2 text-[13px] leading-5 text-neutral-700"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-[2px] h-4 w-4 shrink-0 rounded accent-primary"
+                    checked={checked}
+                    onChange={() => {
+                      if (checked) {
+                        onChange(arr.filter((v) => v !== opt));
+                      } else {
+                        onChange([...arr, opt]);
+                      }
+                    }}
+                  />
+                  <span>{opt}</span>
+                </label>
+              );
+            })}
+          </div>
         </div>
       ) : field.type === "date" ? (
         <input
@@ -430,27 +439,39 @@ export function FormClient({
                       {field.placeholder || fieldTypeLabels[field.type]}
                     </span>
                   </div>
+                ) : field.type === "select" ? (
+                  <AppSelect
+                    value=""
+                    onChange={() => {}}
+                    options={(field.options ?? []).map((opt) => ({ value: opt, label: opt }))}
+                    placeholder={field.placeholder || "請選擇..."}
+                    disabled
+                  />
                 ) : field.type === "radio" ? (
-                  <div className="flex flex-wrap items-center gap-4 py-1 opacity-50">
-                    {(field.options ?? ["是", "否"]).map((opt) => (
-                      <label key={opt} className="flex items-center gap-1.5 text-[13px] text-neutral-400">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full border border-neutral-300">
-                          <span className="h-1.5 w-1.5 rounded-full" />
-                        </span>
-                        {opt}
-                      </label>
-                    ))}
+                  <div className="rounded-lg border border-border bg-neutral-100 px-3 py-2 opacity-50">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                      {(field.options ?? ["是", "否"]).map((opt) => (
+                        <label key={opt} className="flex items-start gap-2 text-[13px] leading-5 text-neutral-400">
+                          <span className="mt-[2px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-neutral-300">
+                            <span className="h-1.5 w-1.5 rounded-full" />
+                          </span>
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 ) : field.type === "checkbox" ? (
-                  <div className="flex flex-wrap items-center gap-4 py-1 opacity-50">
-                    {(field.options ?? []).map((opt) => (
-                      <label key={opt} className="flex items-center gap-1.5 text-[13px] text-neutral-400">
-                        <span className="flex h-4 w-4 items-center justify-center rounded border border-neutral-300">
-                          <span className="h-2 w-2" />
-                        </span>
-                        {opt}
-                      </label>
-                    ))}
+                  <div className="rounded-lg border border-border bg-neutral-100 px-3 py-2 opacity-50">
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                      {(field.options ?? []).map((opt) => (
+                        <label key={opt} className="flex items-start gap-2 text-[13px] leading-5 text-neutral-400">
+                          <span className="mt-[2px] flex h-4 w-4 shrink-0 items-center justify-center rounded border border-neutral-300">
+                            <span className="h-2 w-2" />
+                          </span>
+                          <span>{opt}</span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex h-10 items-center rounded-lg border border-border bg-neutral-100 px-3 cursor-not-allowed">

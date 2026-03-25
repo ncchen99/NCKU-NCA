@@ -153,6 +153,10 @@ export interface DepositRecord {
   club_id: string;
   /** 由管理 API 依 club_id 解析，僅供顯示 */
   club_name?: string;
+  /** 綁定表單 ID（linked_to_response 模式會寫入） */
+  form_id?: string;
+  /** 由管理 API 依 form_id 解析，僅供顯示 */
+  form_title?: string;
   form_response_id?: string;
   status: "pending_payment" | "paid" | "returned";
   amount: number;

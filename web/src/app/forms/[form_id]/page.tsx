@@ -135,14 +135,16 @@ export default async function FormPage({ params }: Props) {
             <h1 className="mt-4 text-[28px] font-bold tracking-tight text-neutral-950">
               {form.title}
             </h1>
-            <p className="mt-2 max-w-[52ch] text-[14px] leading-[24px] text-neutral-600 text-pretty">
+            <p className="mt-2 w-full text-[14px] leading-[24px] text-neutral-600 text-pretty">
               {form.description}
             </p>
             {form.deposit_policy?.required && form.deposit_policy.amount && (
-              <div className="mt-3 rounded-lg bg-amber-50 px-4 py-2.5 text-[13px] text-amber-800 ring-1 ring-inset ring-amber-200">
-                ⚠️ 本表單需繳交保證金 NT$ {form.deposit_policy.amount.toLocaleString()}
+              <div className="mt-4 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+                <p className="text-[13px] font-medium text-neutral-900">
+                  本表單需繳交保證金 NT$ {form.deposit_policy.amount.toLocaleString()}
+                </p>
                 {form.deposit_policy.refund_rule && (
-                  <span className="ml-1 text-amber-600">({form.deposit_policy.refund_rule})</span>
+                  <p className="mt-1 text-[12px] text-neutral-600">{form.deposit_policy.refund_rule}</p>
                 )}
               </div>
             )}

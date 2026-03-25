@@ -29,6 +29,8 @@ interface DepositRecord {
   id: string;
   club_id: string;
   club_name?: string;
+  form_id?: string;
+  form_title?: string;
   form_response_id?: string;
   status: "pending_payment" | "paid" | "returned";
   amount: number;
@@ -58,6 +60,7 @@ function downloadDepositCsv(records: DepositRecord[]) {
   const headers = [
     "社團",
     "社團 ID",
+    "綁定表單",
     "狀態",
     "金額",
     "繳費日期",
@@ -71,6 +74,7 @@ function downloadDepositCsv(records: DepositRecord[]) {
     return [
       record.club_name ?? "",
       record.club_id,
+      record.form_title ?? (record.form_id || record.form_response_id ? "已綁定（表單名稱未知）" : "獨立保證金"),
       statusLabel,
       String(record.amount),
       formatTimestamp(record.paid_at as Parameters<typeof formatTimestamp>[0]),
@@ -228,7 +232,8 @@ export default function DepositPage() {
       const q = search.toLowerCase();
       const idMatch = d.club_id.toLowerCase().includes(q);
       const nameMatch = (d.club_name ?? "").toLowerCase().includes(q);
-      if (!idMatch && !nameMatch) return false;
+      const formMatch = (d.form_title ?? d.form_id ?? "").toLowerCase().includes(q);
+      if (!idMatch && !nameMatch && !formMatch) return false;
     }
     return true;
   });
@@ -314,6 +319,27 @@ export default function DepositPage() {
             ${row.original.amount.toLocaleString()}
           </span>
         ),
+      },
+      {
+        id: "binding",
+        accessorFn: (row) => row.form_title ?? row.form_id ?? "",
+        header: ({ column }) => adminSortableHeader(column, "綁定表單"),
+        sortingFn: (rowA, rowB) =>
+          compareZh(
+            String(rowA.getValue("binding")),
+            String(rowB.getValue("binding")),
+          ),
+        cell: ({ row }) => {
+          const dep = row.original;
+          const hasBinding = Boolean(dep.form_title || dep.form_id || dep.form_response_id);
+          if (!hasBinding) {
+            return <span className="text-neutral-400">獨立保證金</span>;
+          }
+
+          const label = dep.form_title ?? "已綁定（表單名稱未知）";
+
+          return <span className="truncate text-neutral-700">{label}</span>;
+        },
       },
       {
         accessorKey: "status",
@@ -468,7 +494,7 @@ export default function DepositPage() {
             }}
             search={search}
             onSearchChange={setSearch}
-            searchPlaceholder="搜尋社團名稱或代碼..."
+            searchPlaceholder="搜尋社團、代碼或表單..."
           />
 
           {/* batch action toolbar overlays filter bar to avoid layout shift */}
@@ -515,7 +541,7 @@ export default function DepositPage() {
             columns={depositColumns}
             getRowId={(row) => row.id}
             emptyMessage="沒有找到符合條件的保證金紀錄"
-            emptyColSpan={8}
+            emptyColSpan={9}
           />
         )}
       </Card>

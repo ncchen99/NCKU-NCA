@@ -108,7 +108,7 @@ function ResponseDetailPanel({
                         <div className="flex items-center justify-between">
                             <span className="text-[12px] font-medium text-neutral-500">社團</span>
                             <span className="text-[13px] font-medium text-neutral-950">
-                                {response.club_name ?? response.club_id}
+                                {response.club_name ?? "—"}
                             </span>
                         </div>
                         <div className="flex items-center justify-between">
@@ -146,6 +146,8 @@ function ResponseDetailPanel({
                             let displayVal: string;
                             if (val === undefined || val === null || val === "") {
                                 displayVal = "—";
+                            } else if (field.type === "club_picker") {
+                                displayVal = response.club_name ?? String(val);
                             } else if (Array.isArray(val)) {
                                 displayVal = val.join(", ");
                             } else {
@@ -176,7 +178,6 @@ function exportCSV(form: Form, responses: FormResponseRecord[]) {
         "社團",
         "社團 ID",
         "提交者",
-        "提交者 UID",
         "提交時間",
         "重複提交",
         ...headerFields.map((f) => f.label),
@@ -187,7 +188,6 @@ function exportCSV(form: Form, responses: FormResponseRecord[]) {
             r.club_name ?? "",
             r.club_id,
             r.submitted_by_name ?? "",
-            r.submitted_by_uid,
             formatDateTime(r.submitted_at),
             r.is_duplicate_attempt ? "是" : "否",
         ];
@@ -195,6 +195,7 @@ function exportCSV(form: Form, responses: FormResponseRecord[]) {
         const fieldVals = headerFields.map((f) => {
             const val = r.answers[f.id];
             if (val === undefined || val === null || val === "") return "";
+            if (f.type === "club_picker") return r.club_name ?? String(val);
             if (Array.isArray(val)) return val.join("; ");
             return String(val);
         });
@@ -395,10 +396,15 @@ export default function AdminFormPreviewAndResponsesPage() {
                         : undefined
                 }
                 action={
-                    form && responses.length > 0 ? (
+                    form ? (
                         <Button
-                            variant="outline"
+                            variant="ghost"
+                            disabled={responses.length === 0}
                             onClick={() => {
+                                if (responses.length === 0) {
+                                    toast("目前沒有可匯出的回覆", "error");
+                                    return;
+                                }
                                 exportCSV(form, responses);
                                 toast("CSV 已下載", "success");
                             }}

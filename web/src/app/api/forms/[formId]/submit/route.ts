@@ -214,6 +214,9 @@ export async function POST(
       club_id: clubId,
       submitted_by_uid: session.uid,
       answers: sanitizedAnswers,
+    }, {
+      depositPolicy: form.deposit_policy,
+      updatedByUid: session.uid,
     });
 
     return Response.json({ ok: true, response_id: responseId });

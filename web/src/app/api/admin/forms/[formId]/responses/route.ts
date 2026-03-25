@@ -20,12 +20,16 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     // Collect unique UIDs for batch lookup
     const uids = [...new Set(responses.map((r) => r.submitted_by_uid).filter(Boolean))];
     const userNameByUid = new Map<string, string>();
+    const userClubNameByUid = new Map<string, string>();
     await Promise.all(
       uids.map(async (uid) => {
         try {
           const user = await getUser(uid);
           if (user?.display_name) {
             userNameByUid.set(uid, user.display_name);
+          }
+          if (user?.club_name) {
+            userClubNameByUid.set(uid, user.club_name);
           }
         } catch {
           /* ignore */
@@ -35,7 +39,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
     const enriched = responses.map((r) => ({
       ...r,
-      club_name: r.club_id ? clubNameById.get(r.club_id) : undefined,
+      club_name:
+        (r.club_id ? clubNameById.get(r.club_id) : undefined) ??
+        (r.submitted_by_uid ? userClubNameByUid.get(r.submitted_by_uid) : undefined),
       submitted_by_name: r.submitted_by_uid
         ? userNameByUid.get(r.submitted_by_uid)
         : undefined,

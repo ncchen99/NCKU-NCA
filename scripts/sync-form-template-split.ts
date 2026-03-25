@@ -28,93 +28,93 @@ const { getFirestore } = firebaseFirestore;
 
 const OLD_COMBINED_TITLE = "社博 / 寒假場協報名";
 const OLD_COMBINED_DESCRIPTION =
-  "含保證金收退流程的活動報名表單。適用於社團博覽會及寒假場地協調。";
+    "含保證金收退流程的活動報名表單。適用於社團博覽會及寒假場地協調。";
 
 const TEMPLATE_PATCH: Record<
-  string,
-  { title: string; description: string }
+    string,
+    { title: string; description: string }
 > = {
-  expo_registration: {
-    title: "社團博覽會報名",
-    description: "社團博覽會專用報名模板，含保證金收退流程。",
-  },
-  winter_association_registration: {
-    title: "寒假場協報名",
-    description: "寒假場協專用報名模板，含保證金收退流程。",
-  },
+    expo_registration: {
+        title: "社團博覽會報名",
+        description: "社團博覽會專用報名模板，含保證金收退流程。",
+    },
+    winter_association_registration: {
+        title: "寒假場協報名",
+        description: "寒假場協專用報名模板，含保證金收退流程。",
+    },
 };
 
 function loadEnv(envPath: string): void {
-  const content = readFileSync(envPath, "utf-8");
-  for (const line of content.split("\n")) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#")) continue;
-    const eqIdx = trimmed.indexOf("=");
-    if (eqIdx === -1) continue;
-    const key = trimmed.slice(0, eqIdx).trim();
-    const value = trimmed.slice(eqIdx + 1).trim();
-    if (!process.env[key]) {
-      process.env[key] = value;
+    const content = readFileSync(envPath, "utf-8");
+    for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith("#")) continue;
+        const eqIdx = trimmed.indexOf("=");
+        if (eqIdx === -1) continue;
+        const key = trimmed.slice(0, eqIdx).trim();
+        const value = trimmed.slice(eqIdx + 1).trim();
+        if (!process.env[key]) {
+            process.env[key] = value;
+        }
     }
-  }
 }
 
 function initFirebase() {
-  const base64 = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_BASE64;
-  if (!base64) {
-    throw new Error("缺少環境變數 FIREBASE_ADMIN_SERVICE_ACCOUNT_BASE64，請檢查 web/.env");
-  }
+    const base64 = process.env.FIREBASE_ADMIN_SERVICE_ACCOUNT_BASE64;
+    if (!base64) {
+        throw new Error("缺少環境變數 FIREBASE_ADMIN_SERVICE_ACCOUNT_BASE64，請檢查 web/.env");
+    }
 
-  const serviceAccount = JSON.parse(Buffer.from(base64, "base64").toString("utf-8"));
-  const app = initializeApp({ credential: cert(serviceAccount) });
-  return getFirestore(app);
+    const serviceAccount = JSON.parse(Buffer.from(base64, "base64").toString("utf-8"));
+    const app = initializeApp({ credential: cert(serviceAccount) });
+    return getFirestore(app);
 }
 
 async function main() {
-  console.log("🚀 開始同步拆分後模板文案到 Firestore forms...");
+    console.log("🚀 開始同步拆分後模板文案到 Firestore forms...");
 
-  const envPath = resolve(PROJECT_ROOT, "web", ".env");
-  loadEnv(envPath);
+    const envPath = resolve(PROJECT_ROOT, "web", ".env");
+    loadEnv(envPath);
 
-  const db = initFirebase();
-  const snapshot = await db.collection("forms").get();
+    const db = initFirebase();
+    const snapshot = await db.collection("forms").get();
 
-  let scanned = 0;
-  let updated = 0;
+    let scanned = 0;
+    let updated = 0;
 
-  for (const doc of snapshot.docs) {
-    scanned += 1;
-    const data = doc.data() as {
-      form_type?: string;
-      title?: string;
-      description?: string;
-    };
+    for (const doc of snapshot.docs) {
+        scanned += 1;
+        const data = doc.data() as {
+            form_type?: string;
+            title?: string;
+            description?: string;
+        };
 
-    const formType = data.form_type;
-    if (!formType || !(formType in TEMPLATE_PATCH)) continue;
+        const formType = data.form_type;
+        if (!formType || !(formType in TEMPLATE_PATCH)) continue;
 
-    const next = TEMPLATE_PATCH[formType];
-    const patch: Record<string, unknown> = {};
+        const next = TEMPLATE_PATCH[formType];
+        const patch: Record<string, unknown> = {};
 
-    if (data.title === OLD_COMBINED_TITLE) {
-      patch.title = next.title;
+        if (data.title === OLD_COMBINED_TITLE) {
+            patch.title = next.title;
+        }
+
+        if (data.description === OLD_COMBINED_DESCRIPTION) {
+            patch.description = next.description;
+        }
+
+        if (Object.keys(patch).length === 0) continue;
+
+        await doc.ref.update(patch);
+        updated += 1;
+        console.log(`  ✅ 已更新 forms/${doc.id}: ${Object.keys(patch).join(", ")}`);
     }
 
-    if (data.description === OLD_COMBINED_DESCRIPTION) {
-      patch.description = next.description;
-    }
-
-    if (Object.keys(patch).length === 0) continue;
-
-    await doc.ref.update(patch);
-    updated += 1;
-    console.log(`  ✅ 已更新 forms/${doc.id}: ${Object.keys(patch).join(", ")}`);
-  }
-
-  console.log(`\n📊 掃描 ${scanned} 筆 forms，更新 ${updated} 筆。`);
+    console.log(`\n📊 掃描 ${scanned} 筆 forms，更新 ${updated} 筆。`);
 }
 
 main().catch((err) => {
-  console.error("❌ 同步失敗:", err);
-  process.exit(1);
+    console.error("❌ 同步失敗:", err);
+    process.exit(1);
 });

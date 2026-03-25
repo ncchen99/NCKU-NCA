@@ -193,9 +193,9 @@ export default function AdminDashboard() {
           return (
             <Link
               href={`/admin/forms/${row.original.form_id}`}
-              className="inline-flex items-center justify-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
+              className="inline-flex shrink-0 items-center justify-center whitespace-nowrap rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary hover:text-white"
             >
-              查看回覆
+              查看
             </Link>
           );
         },
