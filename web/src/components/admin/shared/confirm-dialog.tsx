@@ -2,7 +2,6 @@
 
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -30,11 +29,6 @@ export function ConfirmDialog({
   return (
     <Modal open={open} onClose={onClose}>
       <div className="flex flex-col items-start pt-6">
-        {variant === "danger" && (
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50">
-            <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
-          </div>
-        )}
         <h3 className="text-lg font-semibold tracking-tight text-neutral-950">
           {title}
         </h3>
