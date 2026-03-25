@@ -96,10 +96,10 @@ export function Footer() {
             <ul className="mt-4 flex flex-col gap-2.5">
               <li>
                 <a
-                  href="mailto:nca@gs.ncku.edu.tw"
+                  href="mailto:nca.ncku@gmail.com"
                   className="text-[13px] text-neutral-600 transition-colors hover:text-neutral-950"
                 >
-                  nca@gs.ncku.edu.tw
+                  nca.ncku@gmail.com
                 </a>
               </li>
               <li>
