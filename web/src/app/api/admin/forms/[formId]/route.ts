@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getForm, updateForm, deleteForm } from "@/lib/firestore";
+import { revalidateFormPaths } from "@/lib/isr";
 
 type RouteContext = { params: Promise<{ formId: string }> };
 
@@ -31,6 +32,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     const { formId } = await context.params;
     const body = await request.json();
     await updateForm(formId, body);
+    revalidateFormPaths(formId);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
@@ -47,6 +49,7 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
   try {
     const { formId } = await context.params;
     await deleteForm(formId);
+    revalidateFormPaths(formId);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

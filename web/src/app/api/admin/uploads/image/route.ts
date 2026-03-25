@@ -5,6 +5,11 @@ import { getAdminStorage } from "@/lib/firebase-admin";
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
 
+function buildFirebasePublicUrl(bucketName: string, objectPath: string): string {
+    const encodedPath = encodeURIComponent(objectPath);
+    return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+}
+
 function sanitizeName(name: string): string {
     return name
         .toLowerCase()
@@ -50,7 +55,7 @@ export async function POST(request: NextRequest) {
         const mm = String(now.getMonth() + 1).padStart(2, "0");
         const safeName = sanitizeName(file.name || "image");
         const fileName = `${Date.now()}-${safeName || "image"}.webp`;
-        const objectPath = `uploads/${yyyy}/${mm}/${fileName}`;
+        const objectPath = `posts/${yyyy}/${mm}/${fileName}`;
 
         const bucket = getAdminStorage().bucket();
         const storageFile = bucket.file(objectPath);
@@ -61,14 +66,11 @@ export async function POST(request: NextRequest) {
                 cacheControl: "public, max-age=31536000, immutable",
             },
             resumable: false,
-            public: false,
             validation: "crc32c",
         });
 
-        const [url] = await storageFile.getSignedUrl({
-            action: "read",
-            expires: "2500-01-01",
-        });
+        const bucketName = bucket.name;
+        const url = buildFirebasePublicUrl(bucketName, objectPath);
 
         return NextResponse.json({
             url,

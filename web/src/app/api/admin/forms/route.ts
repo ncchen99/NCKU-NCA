@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getAllForms, createForm } from "@/lib/firestore";
+import { revalidateFormPaths } from "@/lib/isr";
 
 export async function GET(request: NextRequest) {
   const session = await verifyAdmin();
@@ -28,6 +29,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const id = await createForm(body);
+    revalidateFormPaths(id);
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

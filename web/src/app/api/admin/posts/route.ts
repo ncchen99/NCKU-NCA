@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getAllPosts, createPost, getUsersByIds } from "@/lib/firestore";
+import { revalidatePostPaths } from "@/lib/isr";
+import type { Post } from "@/types";
 
 export async function GET(request: NextRequest) {
   const session = await verifyAdmin();
@@ -50,6 +52,12 @@ export async function POST(request: NextRequest) {
       cover_image_url: cover_image_url ?? null,
       author_uid: session.uid,
     });
+
+    const createdPost = {
+      slug,
+      category,
+    } as Pick<Post, "slug" | "category">;
+    revalidatePostPaths(undefined, createdPost);
 
     return NextResponse.json({ id }, { status: 201 });
   } catch (error) {

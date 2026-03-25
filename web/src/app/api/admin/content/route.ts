@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getAllSiteContent, updateSiteContent, getUsersByIds } from "@/lib/firestore";
+import { revalidateSiteContentPaths } from "@/lib/isr";
 
 export async function GET() {
   const admin = await verifyAdmin();
@@ -48,6 +49,7 @@ export async function PUT(req: NextRequest) {
     if (metadata !== undefined) data.metadata = metadata;
 
     await updateSiteContent(pageId, data, admin.uid);
+    revalidateSiteContentPaths(pageId);
     return Response.json({ success: true });
   } catch (error) {
     return Response.json(

@@ -75,7 +75,7 @@ async function ActivityPreviewSection() {
               className="group row-span-2 block overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
             >
               <article>
-                <div className="h-[260px] bg-neutral-200">
+                <div className="h-[260px] w-full bg-neutral-200">
                   {featured.cover_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -114,7 +114,7 @@ async function ActivityPreviewSection() {
                 className="group flex overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
               >
                 <article className="flex w-full">
-                  <div className="w-[120px] shrink-0 bg-neutral-200">
+                  <div className="h-[120px] w-[120px] shrink-0 bg-neutral-200">
                     {item.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, type DragEvent } from "react";
 import Editor from "react-simple-code-editor";
 import Prism from "prismjs";
 import "prismjs/components/prism-markdown";
@@ -51,7 +51,10 @@ export function MarkdownEditor({
   const [formMenuOpen, setFormMenuOpen] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
   const [imageUploadError, setImageUploadError] = useState("");
+  const [imageDragActive, setImageDragActive] = useState(false);
+  const [lastUploadedImageUrl, setLastUploadedImageUrl] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const imageDragCounterRef = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
@@ -124,6 +127,7 @@ export function MarkdownEditor({
 
       const alt = file.name.replace(/\.[^/.]+$/, "") || "圖片";
       insertText(`![${alt}](${data.url})`);
+      setLastUploadedImageUrl(data.url);
     } catch (error) {
       setImageUploadError(error instanceof Error ? error.message : "圖片上傳失敗");
     } finally {
@@ -132,6 +136,46 @@ export function MarkdownEditor({
         imageInputRef.current.value = "";
       }
     }
+  };
+
+  const handleImageDragEnter = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imageUploading) return;
+    imageDragCounterRef.current += 1;
+    setImageDragActive(true);
+  };
+
+  const handleImageDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imageUploading) return;
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleImageDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imageUploading) return;
+    imageDragCounterRef.current = Math.max(0, imageDragCounterRef.current - 1);
+    if (imageDragCounterRef.current === 0) {
+      setImageDragActive(false);
+    }
+  };
+
+  const handleImageDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (imageUploading) return;
+    imageDragCounterRef.current = 0;
+    setImageDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setImageUploadError("請拖拉圖片檔案");
+      return;
+    }
+    void uploadImage(file);
   };
 
   return (
@@ -343,6 +387,53 @@ export function MarkdownEditor({
                         ))
                       )}
                     </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="border-t border-border bg-white p-3">
+              <div
+                role="button"
+                tabIndex={0}
+                onDragEnter={handleImageDragEnter}
+                onDragOver={handleImageDragOver}
+                onDragLeave={handleImageDragLeave}
+                onDrop={handleImageDrop}
+                onClick={() => {
+                  if (!imageUploading) imageInputRef.current?.click();
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && !imageUploading) {
+                    e.preventDefault();
+                    imageInputRef.current?.click();
+                  }
+                }}
+                className={`cursor-pointer rounded-lg border border-dashed px-4 py-3 transition-all ${imageDragActive
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/25"
+                  : "border-border bg-neutral-50 hover:border-primary/50 hover:bg-primary/5"
+                  } ${imageUploading ? "cursor-not-allowed opacity-70" : ""}`}
+                aria-label="拖拉上傳圖片"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700">
+                      拖拉圖片到此處，或點擊選擇檔案
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      會自動上傳並插入 Markdown 圖片語法
+                    </p>
+                  </div>
+                  <span className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-neutral-500 shadow-sm ring-1 ring-border">
+                    {imageUploading ? "上傳中..." : "選擇圖片"}
+                  </span>
+                </div>
+                {lastUploadedImageUrl && (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-border bg-white">
+                    <img
+                      src={lastUploadedImageUrl}
+                      alt="最新上傳圖片預覽"
+                      className="max-h-44 w-full object-cover"
+                    />
                   </div>
                 )}
               </div>

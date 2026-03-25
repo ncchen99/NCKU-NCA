@@ -7,6 +7,7 @@ import {
   getAttendanceStats,
   getExpectedClubsForAttendanceEvent,
 } from "@/lib/firestore";
+import { revalidateAttendancePaths } from "@/lib/isr";
 
 export async function GET(
   req: NextRequest,
@@ -80,6 +81,7 @@ export async function PUT(
     const { eventId } = await params;
     const body = await req.json();
     await updateAttendanceEvent(eventId, body);
+    revalidateAttendancePaths();
     return Response.json({ success: true });
   } catch (error) {
     return Response.json(

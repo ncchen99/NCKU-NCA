@@ -118,7 +118,7 @@ export default function NewsPage() {
             <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="overflow-hidden rounded-lg shadow-[0_0_0_1px_rgba(10,10,10,0.08)]">
-                  <div className="aspect-[16/9] animate-pulse bg-neutral-100" />
+                  <div className="h-44 w-full animate-pulse bg-neutral-100" />
                   <div className="bg-white p-4">
                     <div className="h-3 w-20 animate-pulse rounded bg-neutral-100" />
                     <div className="mt-3 h-4 w-3/4 animate-pulse rounded bg-neutral-100" />
@@ -141,7 +141,7 @@ export default function NewsPage() {
                     href={`/news/${item.slug}`}
                     className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all duration-200 hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)] hover:-translate-y-0.5"
                   >
-                    <div className="relative aspect-[16/9] bg-neutral-200">
+                    <div className="relative h-44 w-full bg-neutral-200">
                       {item.cover_image_url ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img

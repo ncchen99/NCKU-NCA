@@ -70,7 +70,7 @@ async function NewsPreviewSection() {
               className="group relative block overflow-hidden rounded-lg shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
             >
               <article>
-                <div className="relative aspect-[16/9] bg-neutral-200">
+                <div className="relative h-44 w-full bg-neutral-200">
                   {item.cover_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img

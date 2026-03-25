@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getPostById, updatePost, deletePost, getUsersByIds } from "@/lib/firestore";
+import { revalidatePostPaths } from "@/lib/isr";
 
 type RouteContext = { params: Promise<{ postId: string }> };
 
@@ -33,8 +34,17 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
   try {
     const { postId } = await context.params;
+    const previousPost = await getPostById(postId);
     const body = await request.json();
     await updatePost(postId, body);
+
+    const nextPost = {
+      slug: typeof body.slug === "string" ? body.slug : previousPost?.slug,
+      category:
+        typeof body.category === "string" ? body.category : previousPost?.category,
+    };
+    revalidatePostPaths(previousPost, nextPost);
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
@@ -50,7 +60,9 @@ export async function DELETE(_request: NextRequest, context: RouteContext) {
 
   try {
     const { postId } = await context.params;
+    const previousPost = await getPostById(postId);
     await deletePost(postId);
+    revalidatePostPaths(previousPost, undefined);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

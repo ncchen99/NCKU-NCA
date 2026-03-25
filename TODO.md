@@ -136,7 +136,7 @@
 - [x] 各頁面內容 CRUD（FormModal 內嵌 Markdown 編輯）
 - [ ] 富文本 Markdown 編輯器（Milkdown 或 TipTap）
 - [ ] 圖片上傳整合（Firebase Storage）
-- [ ] 儲存並發布 + ISR 觸發
+- [x] 儲存並發布 + ISR 觸發
 
 ### 3.3 文章管理 `/admin/posts`
 - [x] 文章列表 UI（狀態 tabs + 搜尋 + 表格 + mock data）

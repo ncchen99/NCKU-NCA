@@ -4,6 +4,7 @@ import {
   getAllAttendanceEvents,
   createAttendanceEvent,
 } from "@/lib/firestore";
+import { revalidateAttendancePaths } from "@/lib/isr";
 
 export async function GET() {
   const admin = await verifyAdmin();
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       closes_at: closesAt,
       created_by: admin.uid,
     });
+    revalidateAttendancePaths();
     return Response.json({ id: eventId }, { status: 201 });
   } catch (error) {
     return Response.json(

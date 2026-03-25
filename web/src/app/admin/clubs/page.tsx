@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import type { DragEvent } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import {
   ArrowUpTrayIcon,
   ArrowDownTrayIcon,
+  ArrowPathIcon,
   PencilSquareIcon,
   DocumentArrowUpIcon,
   CheckCircleIcon,
@@ -107,6 +109,8 @@ export default function ClubsPage() {
   const [importLoading, setImportLoading] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchClubs = useCallback(async (background = false) => {
@@ -205,6 +209,7 @@ export default function ClubsPage() {
     setImportData([]);
     setImportError(null);
     setImportResult(null);
+    setIsDragOver(false);
     setImportOpen(true);
   };
 
@@ -238,9 +243,33 @@ export default function ClubsPage() {
     }
   };
 
-  const handleExport = async (format: ImportFormat) => {
+  const handleUploadAreaDragOver = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleUploadAreaDragLeave = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleUploadAreaDrop = (e: DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      void handleFileSelect(file);
+    }
+  };
+
+  const handleExport = async () => {
+    setExportLoading(true);
     try {
-      const res = await fetch(`/api/admin/clubs/export?format=${format}`);
+      const res = await fetch("/api/admin/clubs/export?format=yaml");
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "匯出失敗");
@@ -249,16 +278,17 @@ export default function ClubsPage() {
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      const ext = format === "yaml" ? "yaml" : "json";
       a.href = url;
-      a.download = `clubs_export_${new Date().toISOString().slice(0, 10)}.${ext}`;
+      a.download = `clubs_export_${new Date().toISOString().slice(0, 10)}.yaml`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast(`${format.toUpperCase()} 已下載`, "success");
+      toast("YAML 已下載", "success");
     } catch (err) {
       toast(err instanceof Error ? err.message : "匯出失敗", "error");
+    } finally {
+      setExportLoading(false);
     }
   };
 
@@ -427,13 +457,17 @@ export default function ClubsPage() {
         count={loading || error ? undefined : clubs.length}
         action={
           <>
-            <Button variant="ghost" onClick={() => handleExport("yaml")}>
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              匯出 YAML
-            </Button>
-            <Button variant="ghost" onClick={() => handleExport("json")}>
-              <ArrowDownTrayIcon className="h-4 w-4" />
-              匯出 JSON
+            <Button
+              variant="ghost"
+              onClick={handleExport}
+              disabled={exportLoading}
+            >
+              {exportLoading ? (
+                <ArrowPathIcon className="h-4 w-4 animate-spin" />
+              ) : (
+                <ArrowDownTrayIcon className="h-4 w-4" />
+              )}
+              {exportLoading ? "準備下載中…" : "匯出 YAML"}
             </Button>
             <Button onClick={openImport}>
               <ArrowUpTrayIcon className="h-4 w-4" />
@@ -590,10 +624,18 @@ export default function ClubsPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full flex-col items-center gap-3 rounded-lg border-2 border-dashed border-neutral-300 px-6 py-10 text-neutral-500 transition-colors hover:border-primary hover:text-primary"
+              onDragEnter={handleUploadAreaDragOver}
+              onDragOver={handleUploadAreaDragOver}
+              onDragLeave={handleUploadAreaDragLeave}
+              onDrop={handleUploadAreaDrop}
+              className={`flex w-full flex-col items-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 text-neutral-500 transition-colors ${
+                isDragOver
+                  ? "border-primary bg-primary/5 text-primary"
+                  : "border-neutral-300 hover:border-primary hover:text-primary"
+              }`}
             >
               <DocumentArrowUpIcon className="h-10 w-10" />
-              <span className="text-sm font-medium">點擊選擇檔案</span>
+              <span className="text-sm font-medium">拖拉檔案到這裡，或點擊選擇檔案</span>
               <span className="text-xs text-neutral-400">
                 支援 .yaml .yml .json 格式
               </span>

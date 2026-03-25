@@ -3,15 +3,18 @@ import yaml from "js-yaml";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getAllClubs } from "@/lib/firestore";
 
-type ExportFormat = "yaml" | "json";
-
 export async function GET(req: NextRequest) {
   const admin = await verifyAdmin();
   if (!admin) return unauthorizedResponse();
 
   try {
     const formatParam = req.nextUrl.searchParams.get("format");
-    const format: ExportFormat = formatParam === "json" ? "json" : "yaml";
+    if (formatParam && formatParam !== "yaml") {
+      return Response.json(
+        { error: "目前僅支援 YAML 匯出（format=yaml）" },
+        { status: 400 },
+      );
+    }
 
     const clubs = await getAllClubs();
     const exportClubs = clubs.map((club) => ({
@@ -38,27 +41,18 @@ export async function GET(req: NextRequest) {
       clubs: exportClubs,
     };
 
-    const bodyText =
-      format === "json"
-        ? `${JSON.stringify(payload, null, 2)}\n`
-        : yaml.dump(payload, {
-            noRefs: true,
-            lineWidth: 120,
-            quotingType: '"',
-            forceQuotes: false,
-          });
-
-    const extension = format === "json" ? "json" : "yaml";
-    const contentType =
-      format === "json"
-        ? "application/json; charset=utf-8"
-        : "text/yaml; charset=utf-8";
+    const bodyText = yaml.dump(payload, {
+      noRefs: true,
+      lineWidth: 120,
+      quotingType: '"',
+      forceQuotes: false,
+    });
 
     return new Response(bodyText, {
       status: 200,
       headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `attachment; filename=clubs_export.${extension}`,
+        "Content-Type": "text/yaml; charset=utf-8",
+        "Content-Disposition": "attachment; filename=clubs_export.yaml",
       },
     });
   } catch (error) {

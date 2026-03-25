@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
 import Image from "next/image";
 import {
@@ -130,8 +130,10 @@ export default function PostsPage() {
   );
   const [tagStatsLoading, setTagStatsLoading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [coverDragActive, setCoverDragActive] = useState(false);
   const tagSuggestRootRef = useRef<HTMLDivElement>(null);
   const coverFileInputRef = useRef<HTMLInputElement>(null);
+  const coverDragCounterRef = useRef(0);
 
   // Form embedding state
   const [forms, setForms] = useState<{ id: string; title: string }[]>([]);
@@ -399,6 +401,46 @@ export default function PostsPage() {
       }
     }
   }
+
+  const handleCoverDragEnter = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (coverUploading) return;
+    coverDragCounterRef.current += 1;
+    setCoverDragActive(true);
+  };
+
+  const handleCoverDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (coverUploading) return;
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleCoverDragLeave = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (coverUploading) return;
+    coverDragCounterRef.current = Math.max(0, coverDragCounterRef.current - 1);
+    if (coverDragCounterRef.current === 0) {
+      setCoverDragActive(false);
+    }
+  };
+
+  const handleCoverDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (coverUploading) return;
+    coverDragCounterRef.current = 0;
+    setCoverDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast("請拖拉圖片檔案", "error");
+      return;
+    }
+    void handleCoverUpload(file);
+  };
 
   const postColumns = useMemo<ColumnDef<Post>[]>(
     () => [
@@ -686,15 +728,7 @@ export default function PostsPage() {
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">
               封面圖片 URL
             </label>
-            <div className="flex items-center gap-2">
-              <input
-                value={form.cover_image_url}
-                onChange={(e) =>
-                  updateForm({ cover_image_url: (e.target as HTMLInputElement).value })
-                }
-                placeholder="https://..."
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] text-neutral-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
+            <div className="space-y-3">
               <input
                 ref={coverFileInputRef}
                 type="file"
@@ -706,28 +740,66 @@ export default function PostsPage() {
                   void handleCoverUpload(file);
                 }}
               />
-              <Button
-                type="button"
-                variant="outline"
-                disabled={coverUploading}
-                onClick={() => coverFileInputRef.current?.click()}
+              <div
+                role="button"
+                tabIndex={0}
+                onDragEnter={handleCoverDragEnter}
+                onDragOver={handleCoverDragOver}
+                onDragLeave={handleCoverDragLeave}
+                onDrop={handleCoverDrop}
+                onClick={() => {
+                  if (!coverUploading) coverFileInputRef.current?.click();
+                }}
+                onKeyDown={(e) => {
+                  if ((e.key === "Enter" || e.key === " ") && !coverUploading) {
+                    e.preventDefault();
+                    coverFileInputRef.current?.click();
+                  }
+                }}
+                className={`cursor-pointer rounded-lg border border-dashed px-4 py-3 transition-all ${coverDragActive
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/25"
+                  : "border-border bg-neutral-50 hover:border-primary/50 hover:bg-primary/5"
+                  } ${coverUploading ? "cursor-not-allowed opacity-70" : ""}`}
+                aria-label="拖拉上傳封面圖片"
               >
-                {coverUploading ? "上傳中..." : "上傳圖片"}
-              </Button>
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-neutral-700">
+                      拖拉圖片到此處，或點擊選擇檔案
+                    </p>
+                    <p className="text-xs text-neutral-400">
+                      上傳後會自動壓縮並轉為 WebP
+                    </p>
+                  </div>
+                  <span className="rounded-md bg-white px-2.5 py-1 text-xs font-medium text-neutral-500 shadow-sm ring-1 ring-border">
+                    {coverUploading ? "上傳中..." : "選擇圖片"}
+                  </span>
+                </div>
+                {form.cover_image_url && (
+                  <div className="mt-3 overflow-hidden rounded-lg border border-border bg-white">
+                    <Image
+                      src={form.cover_image_url}
+                      alt="封面預覽"
+                      width={960}
+                      height={480}
+                      unoptimized
+                      className="max-h-52 w-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
+              <input
+                value={form.cover_image_url}
+                onChange={(e) =>
+                  updateForm({ cover_image_url: (e.target as HTMLInputElement).value })
+                }
+                placeholder="https://..."
+                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] text-neutral-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
             </div>
             <p className="mt-1 text-xs text-neutral-400">
-              上傳後會自動壓縮並轉為 WebP，儲存於 Firebase Storage。
+              可拖拉上傳，或直接貼上圖片 URL。
             </p>
-            {form.cover_image_url && (
-              <Image
-                src={form.cover_image_url}
-                alt="封面預覽"
-                width={640}
-                height={320}
-                unoptimized
-                className="mt-3 max-h-40 w-auto rounded-lg border border-border object-cover"
-              />
-            )}
           </div>
 
 

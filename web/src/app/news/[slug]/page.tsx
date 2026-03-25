@@ -170,13 +170,15 @@ export default async function NewsArticlePage({ params }: Props) {
 
               {/* Cover image */}
               {post.cover_image_url && (
-                <div className="mb-10 overflow-hidden rounded-lg">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={post.cover_image_url}
-                    alt={post.title}
-                    className="w-full object-cover"
-                  />
+                <div className="mb-10 overflow-hidden rounded-xl border border-neutral-200 bg-neutral-100">
+                  <div className="aspect-[16/9] w-full">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.cover_image_url}
+                      alt={post.title}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
                 </div>
               )}
 
