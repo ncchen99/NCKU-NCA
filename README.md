@@ -15,6 +15,15 @@
 - Auth：Firebase Session
 - 腳本：TypeScript (tsx) + Python
 
+### 1.1 介面介紹
+
+
+| 1. 首頁                                   | 2. 最新消息                                     |
+| ----------------------------------------- | ----------------------------------------------- |
+| ![首頁](data/assets/images/demo1.png)     | ![最新消息](data/assets/images/demo2.png)       |
+| 3. 文章區塊                               | 4. 後臺 Dashboard                               |
+| ![文章區塊](data/assets/images/demo3.png) | ![後臺 Dashboard](data/assets/images/demo4.png) |
+
 ## 2. 目錄與角色
 
 主要路徑：

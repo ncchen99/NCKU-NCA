@@ -3,7 +3,7 @@ import sharp from "sharp";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { uploadPublicObjectToR2 } from "@/lib/cloudflare-r2";
 
-const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
+const MAX_IMAGE_SIZE_BYTES = 4 * 1024 * 1024;
 
 function sanitizeName(name: string): string {
     return name
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         if (file.size > MAX_IMAGE_SIZE_BYTES) {
             return NextResponse.json(
-                { error: "圖片大小不可超過 8MB" },
+                { error: "圖片大小不可超過 4MB" },
                 { status: 400 },
             );
         }
