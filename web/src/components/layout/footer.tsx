@@ -31,9 +31,9 @@ export function Footer() {
     <footer className="bg-white">
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl px-4 py-12 lg:px-8">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
+        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand column — 2/4 */}
-          <div className="md:col-span-2">
+          <div className="sm:col-span-2">
             <Link href="/" className="flex items-center gap-3">
               <img src="/logo.svg" alt="NCA Logo" className="h-7 w-7 shrink-0" />
               <div className="flex items-baseline gap-2">
@@ -115,13 +115,18 @@ export function Footer() {
 
       {/* Footer bar */}
       <div className="border-t border-border">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 sm:flex-row lg:px-8">
-          <p className="font-mono text-[11px] text-neutral-400">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-4 py-4 text-center sm:flex-row sm:text-left lg:px-8">
+          <p className="font-mono text-[12px] text-neutral-400">
             &copy; {new Date().getFullYear()} 國立成功大學社團聯合會
           </p>
-          <p className="font-mono text-[11px] text-neutral-400">
-            Built with Next.js &middot; Tailwind CSS &middot; Firebase
-          </p>
+          <a
+            href="https://github.com/ncchen99/NCKU-NCA"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-mono text-[12px] text-neutral-400 transition-colors hover:text-neutral-700"
+          >
+            GitHub Repository
+          </a>
         </div>
       </div>
     </footer>

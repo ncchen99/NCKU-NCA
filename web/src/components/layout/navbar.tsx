@@ -67,16 +67,16 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 bg-white ring-1 ring-neutral-950/8">
+    <header className="sticky top-0 z-50 h-16 bg-white ring-1 ring-neutral-950/8">
       <nav className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 lg:px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3">
-          <img src="/logo.svg" alt="NCA Logo" className="h-7 w-7 shrink-0" />
+          <img src="/logo.svg" alt="NCA Logo" className="h-8 w-8 shrink-0" />
           <div className="flex items-baseline gap-2">
-            <span className="text-[13px] font-[650] tracking-tight text-neutral-950">
+            <span className="text-[15px] font-[650] tracking-tight text-neutral-950 sm:text-[16px]">
               成大社聯會
             </span>
-            <span className="font-mono text-[13px] font-[700] uppercase tracking-wider text-neutral-400">
+            <span className="font-mono text-[14px] font-[700] uppercase tracking-wider text-neutral-400 sm:text-[15px]">
               NCKU NCA
             </span>
           </div>

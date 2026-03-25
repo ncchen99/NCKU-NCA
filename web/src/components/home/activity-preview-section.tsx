@@ -57,8 +57,8 @@ async function ActivityPreviewSection() {
 
   return (
     <section className="w-full bg-neutral-50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-10 flex items-baseline justify-between">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <SectionHeading title="活動回顧" subtitle="Activity Review" />
           <ViewAllLink href="/activities" />
         </div>
@@ -75,7 +75,7 @@ async function ActivityPreviewSection() {
               className="group row-span-2 block overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
             >
               <article>
-                <div className="h-[260px] w-full bg-neutral-200">
+                <div className="h-[220px] w-full bg-neutral-200 sm:h-[260px]">
                   {featured.cover_image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -111,10 +111,10 @@ async function ActivityPreviewSection() {
               <Link
                 key={item.slug}
                 href={`/activities/${item.slug}`}
-                className="group flex overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
+                className="group overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)]"
               >
-                <article className="flex w-full">
-                  <div className="min-h-[120px] w-[120px] shrink-0 self-stretch bg-neutral-200">
+                <article className="flex w-full flex-col sm:flex-row">
+                  <div className="h-[180px] w-full shrink-0 bg-neutral-200 sm:min-h-[120px] sm:h-auto sm:w-[120px] sm:self-stretch">
                     {item.cover_image_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img

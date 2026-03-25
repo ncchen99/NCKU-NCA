@@ -39,8 +39,8 @@ export async function FormPreviewSection({ preFetchedForms }: { preFetchedForms?
 
   return (
     <section className="w-full bg-neutral-50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-10 flex items-baseline justify-between">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <SectionHeading title="表單專區" subtitle="Open Forms" />
         </div>
 

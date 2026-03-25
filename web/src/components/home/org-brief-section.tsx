@@ -25,17 +25,17 @@ const areas = [
 function OrgBriefSection() {
   return (
     <section className="w-full bg-neutral-50">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
         <SectionHeading
           title="關於組織"
           subtitle="About Club Association of NCKU"
           className="mb-12"
         />
 
-        <div className="grid grid-cols-2 gap-16">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:gap-16">
           {/* Left — Mission */}
           <div className="flex flex-col gap-8">
-            <div className="max-w-[52ch] space-y-5 leading-[28px] text-neutral-600 text-pretty">
+            <div className="max-w-[52ch] space-y-5 text-pretty leading-7 text-neutral-600 sm:leading-[28px]">
               <p>
                 成功大學社團聯合會（Club Association of National Cheng Kung University，簡稱 NCA）成立於 1994
                 年，目前共有 231 個社團。我們是校內社團的自治聯合組織，負責協調共同事務、整合資源並維護社團權益。
@@ -44,7 +44,7 @@ function OrgBriefSection() {
                 社聯會由正副會長、行政團隊、六性質主席團與顧問團共同運作，並透過社團代表大會與性質會議推動決策，執行社團博覽會、場地協調與財務管理等核心業務。
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-row items-center gap-3">
               <Button variant="primary" href="/about">閱讀更多</Button>
               <Button variant="ghost" href="/charter/charter">組織章程</Button>
             </div>
@@ -52,7 +52,7 @@ function OrgBriefSection() {
 
           {/* Right — Focus areas */}
           <div className="flex flex-col">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {areas.map((area) => (
                 <div
                   key={area.title}

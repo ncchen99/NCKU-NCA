@@ -56,8 +56,8 @@ async function NewsPreviewSection() {
 
   return (
     <section className="w-full">
-      <div className="mx-auto max-w-6xl px-6 py-12">
-        <div className="mb-10 flex items-baseline justify-between">
+      <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mb-10 flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <SectionHeading title="最新消息" subtitle="Latest News" />
           <ViewAllLink href="/news" />
         </div>
