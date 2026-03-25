@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       maxAge: SESSION_EXPIRY_MS / 1000,
       httpOnly: true,
       secure: isProduction,
-      sameSite: "lax",
+      sameSite: "strict",
+      priority: "high",
       path: "/",
     });
 
@@ -72,7 +73,8 @@ export async function DELETE() {
       maxAge: 0,
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      sameSite: "strict",
+      priority: "high",
       path: "/",
     });
 
