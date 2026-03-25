@@ -30,20 +30,13 @@ export function ClubCategoryPicker({
   const [categoryName, setCategoryName] = useState<string>(
     () => defaultCategoryName ?? "",
   );
-
-  useEffect(() => {
-    if (defaultCategoryName) setCategoryName(defaultCategoryName);
-  }, [defaultCategoryName]);
   const [clubs, setClubs] = useState<ClubOption[]>([]);
-  const [loadingClubs, setLoadingClubs] = useState(false);
 
   useEffect(() => {
     if (!categoryName) {
-      setClubs([]);
       return;
     }
     let cancelled = false;
-    setLoadingClubs(true);
     getActiveClubs(categoryName)
       .then((clubList) => {
         if (cancelled) return;
@@ -51,9 +44,6 @@ export function ClubCategoryPicker({
       })
       .catch(() => {
         if (!cancelled) setClubs([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoadingClubs(false);
       });
     return () => {
       cancelled = true;
@@ -66,7 +56,9 @@ export function ClubCategoryPicker({
   }));
 
   const clubOptions: AppSelectOption[] =
-    clubs.length > 0
+    !categoryName
+      ? []
+      : clubs.length > 0
       ? clubs.map((c) => ({ value: c.id, label: c.name }))
       : valueClubId && defaultClubName
         ? [{ value: valueClubId, label: defaultClubName }]
@@ -74,9 +66,7 @@ export function ClubCategoryPicker({
 
   const clubPlaceholder = !categoryName
     ? "請先選擇類別"
-    : loadingClubs
-      ? "載入中…"
-      : clubs.length === 0
+    : clubs.length === 0
         ? "此類別尚無啟用中的社團"
         : "請選擇社團";
 
@@ -101,7 +91,7 @@ export function ClubCategoryPicker({
         <AppSelect
           value={valueClubId}
           options={clubOptions}
-          disabled={disabled || !categoryName || loadingClubs}
+          disabled={disabled || !categoryName}
           placeholder={clubPlaceholder}
           onChange={(v) => onChangeClubId(v)}
         />

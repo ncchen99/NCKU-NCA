@@ -105,6 +105,8 @@ export function AdminDataTable<TData>({
   classNames?: AdminDataTableClassNames;
 }) {
   const [sorting, setSorting] = useState<SortingState>([]);
+  // TanStack Table returns function instances by design; React Compiler cannot safely memoize this API.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
     columns,

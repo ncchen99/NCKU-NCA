@@ -11,7 +11,6 @@ import {
   AdminErrorState,
   ConfirmDialog,
   FormModal,
-  FormField,
   AdminDataTable,
   adminSortableHeader,
   compareZh,
@@ -22,11 +21,6 @@ import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
 import { toast } from "@/components/ui/use-toast";
 
 type RoleTab = "all" | "admin" | "club_member";
-
-interface Club {
-  id: string;
-  name: string;
-}
 
 interface User {
   uid: string;

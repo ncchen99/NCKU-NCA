@@ -31,20 +31,43 @@ export function FullPageFormModal({
   isFetching = false,
   wide = false,
 }: FullPageFormModalProps) {
+  if (!open) return null;
+
+  return (
+    <OpenFullPageFormModal
+      onClose={onClose}
+      onSubmit={onSubmit}
+      title={title}
+      submitLabel={submitLabel}
+      cancelLabel={cancelLabel}
+      loading={loading}
+      isFetching={isFetching}
+      wide={wide}
+    >
+      {children}
+    </OpenFullPageFormModal>
+  );
+}
+
+function OpenFullPageFormModal({
+  onClose,
+  onSubmit,
+  title,
+  children,
+  submitLabel,
+  cancelLabel,
+  loading,
+  isFetching,
+  wide,
+}: Omit<FullPageFormModalProps, "open">) {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setConfirmOpen(false);
-      return;
-    }
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open]);
-
-  if (!open) return null;
+  }, []);
 
   const handleCancel = () => {
     setConfirmOpen(true);

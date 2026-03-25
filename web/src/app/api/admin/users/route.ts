@@ -2,6 +2,13 @@ import { NextRequest } from "next/server";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
 import { getAllUsers, getClubsByIds, createOrUpdateUser } from "@/lib/firestore";
 import { getAdminAuth } from "@/lib/firebase-admin";
+import type { User } from "@/types";
+
+type UpdateUserPayload = {
+  uid?: string;
+  role?: User["role"];
+  club_id?: User["club_id"];
+};
 
 export async function GET(req: NextRequest) {
   const admin = await verifyAdmin();
@@ -33,7 +40,7 @@ export async function PUT(req: NextRequest) {
   if (!admin) return unauthorizedResponse();
 
   try {
-    const { uid, role, club_id } = await req.json();
+    const { uid, role, club_id } = (await req.json()) as UpdateUserPayload;
 
     if (!uid) {
       return Response.json(
@@ -42,7 +49,7 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    const updates: Record<string, any> = {};
+    const updates: Partial<User> = {};
 
     if (role) {
       if (role !== "admin" && role !== "club_member") {

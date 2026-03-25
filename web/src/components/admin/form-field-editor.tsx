@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import {
   PlusIcon,
   TrashIcon,
@@ -69,7 +69,7 @@ function generateFieldId(
   existingIds: string[],
   type: FormFieldType["type"],
 ): string {
-  let base = `field_${type}`;
+  const base = `field_${type}`;
   let num = 1;
   while (existingIds.includes(`${base}_${num}`)) num++;
   return `${base}_${num}`;
@@ -93,9 +93,6 @@ function createEmptyField(
 
 const inputBase =
   "block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-primary focus:ring-1 focus:ring-primary/30 disabled:bg-neutral-50 disabled:text-neutral-500";
-
-const selectBase =
-  "block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-neutral-950 outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30";
 
 /* ─── Inline Select (lightweight) ─── */
 
@@ -568,48 +565,36 @@ export function FormFieldEditor({
   const sortedFields = [...fields].sort((a, b) => a.order - b.order);
   const allFieldIds = sortedFields.map((f) => f.id);
 
-  const handleUpdate = useCallback(
-    (index: number, updatedField: FormFieldType) => {
-      const next = [...fields];
-      const realIndex = next.findIndex((f) => f.id === sortedFields[index].id);
-      if (realIndex !== -1) next[realIndex] = updatedField;
-      onChange(next);
-    },
-    [fields, sortedFields, onChange],
-  );
+  function handleUpdate(index: number, updatedField: FormFieldType) {
+    const next = [...fields];
+    const realIndex = next.findIndex((f) => f.id === sortedFields[index].id);
+    if (realIndex !== -1) next[realIndex] = updatedField;
+    onChange(next);
+  }
 
-  const handleDelete = useCallback(
-    (index: number) => {
-      const target = sortedFields[index];
-      const next = fields.filter((f) => f.id !== target.id);
-      // Re-index the orders
-      const reIndexed = next
-        .sort((a, b) => a.order - b.order)
-        .map((f, i) => ({ ...f, order: i }));
-      onChange(reIndexed);
-    },
-    [fields, sortedFields, onChange],
-  );
+  function handleDelete(index: number) {
+    const target = sortedFields[index];
+    const next = fields.filter((f) => f.id !== target.id);
+    // Re-index the orders
+    const reIndexed = next
+      .sort((a, b) => a.order - b.order)
+      .map((f, i) => ({ ...f, order: i }));
+    onChange(reIndexed);
+  }
 
-  const handleMoveUp = useCallback(
-    (index: number) => {
-      if (index <= 0) return;
-      const next = [...sortedFields];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      onChange(next.map((f, i) => ({ ...f, order: i })));
-    },
-    [sortedFields, onChange],
-  );
+  function handleMoveUp(index: number) {
+    if (index <= 0) return;
+    const next = [...sortedFields];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    onChange(next.map((f, i) => ({ ...f, order: i })));
+  }
 
-  const handleMoveDown = useCallback(
-    (index: number) => {
-      if (index >= sortedFields.length - 1) return;
-      const next = [...sortedFields];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      onChange(next.map((f, i) => ({ ...f, order: i })));
-    },
-    [sortedFields, onChange],
-  );
+  function handleMoveDown(index: number) {
+    if (index >= sortedFields.length - 1) return;
+    const next = [...sortedFields];
+    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    onChange(next.map((f, i) => ({ ...f, order: i })));
+  }
 
   const [addMenuOpen, setAddMenuOpen] = useState(false);
 

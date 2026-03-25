@@ -78,6 +78,11 @@ export function AppSelect({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, searchTerm, searchable]);
 
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    setSearchTerm("");
+  }, []);
+
   const [menuPos, setMenuPos] = useState<{
     top: number;
     left: number;
@@ -113,18 +118,15 @@ export function AppSelect({
   }, [open, measure]);
 
   useEffect(() => {
-    if (!open) {
-      setSearchTerm("");
-      return;
-    }
+    if (!open) return;
     const onDoc = (e: MouseEvent) => {
       const t = e.target as Node;
       if (btnRef.current?.contains(t)) return;
       if (menuRef.current?.contains(t)) return;
-      setOpen(false);
+      closeMenu();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") closeMenu();
     };
     document.addEventListener("mousedown", onDoc);
     document.addEventListener("keydown", onKey);
@@ -142,7 +144,7 @@ export function AppSelect({
       window.removeEventListener("scroll", measure, true);
       window.removeEventListener("resize", measure);
     };
-  }, [open, measure, searchable]);
+  }, [open, measure, searchable, closeMenu]);
 
   const invalidCls =
     invalid || ariaInvalid
@@ -209,7 +211,7 @@ export function AppSelect({
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       onChange(opt.value);
-                      setOpen(false);
+                      closeMenu();
                     }}
                   >
                     <span className="flex-1 truncate">{opt.label}</span>

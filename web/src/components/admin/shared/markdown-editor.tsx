@@ -10,7 +10,6 @@ import rehypeRaw from "rehype-raw";
 import rehypeStringify from "rehype-stringify";
 import {
   ChevronDownIcon,
-  HashtagIcon,
   BoldIcon,
   CodeBracketIcon,
   SquaresPlusIcon,
