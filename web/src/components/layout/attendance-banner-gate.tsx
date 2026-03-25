@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { AttendanceBanner } from "@/components/layout/attendance-banner";
 import { formatDateTimeZhTWFromUnknown } from "@/lib/datetime";
+import { useAuth } from "@/lib/auth-context";
+import { getOpenAttendanceEvents } from "@/lib/client-firestore";
 
 type OpenEvent = {
   id: string;
@@ -12,16 +14,16 @@ type OpenEvent = {
 };
 
 export function AttendanceBannerGate() {
+  const { firebaseUser } = useAuth();
   const [event, setEvent] = useState<OpenEvent | null>(null);
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/public/attendance/open")
-      .then((r) => r.json())
-      .then((d: { events?: OpenEvent[] }) => {
+    getOpenAttendanceEvents({ userUid: firebaseUser?.uid })
+      .then((events) => {
         if (cancelled) return;
-        const first = d.events?.[0];
+        const first = events?.[0];
         setEvent(first ?? null);
 
         // If user already signed in, auto-hide after some time
@@ -37,7 +39,7 @@ export function AttendanceBannerGate() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [firebaseUser?.uid]);
 
   if (!event || !visible) return null;
 

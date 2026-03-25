@@ -62,7 +62,13 @@ export default function ProfilePage() {
     setError(null);
     setSuccess(false);
     setSaving(true);
+    const user = firebaseUser;
     try {
+      if (!user) {
+        setError("請先登入再儲存資料。");
+        return;
+      }
+
       const clubs = await getActiveClubs();
       const selectedClub = clubs.find((c) => c.id === clubId);
       if (!selectedClub) {
@@ -71,8 +77,8 @@ export default function ProfilePage() {
       }
 
       await saveProfileUser({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email ?? "",
+        uid: user.uid,
+        email: user.email ?? "",
         displayName: displayName.trim(),
         clubId,
         positionTitle: positionTitle.trim() || undefined,

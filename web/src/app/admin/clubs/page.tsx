@@ -30,6 +30,7 @@ import {
 } from "@/components/admin/shared";
 import { adminFetch } from "@/lib/admin-utils";
 import { toast } from "@/components/ui/use-toast";
+import { getAdminClubs } from "@/lib/client-firestore";
 
 interface Club {
   id: string;
@@ -117,8 +118,8 @@ export default function ClubsPage() {
     if (!background) setLoading(true);
     if (!background) setError(null);
     try {
-      const data = await adminFetch<{ clubs: Club[] }>("/api/admin/clubs");
-      setClubs(data.clubs || []);
+      const data = await getAdminClubs();
+      setClubs(data as Club[]);
     } catch (err) {
       if (!background) {
         setError(err instanceof Error ? err.message : "發生未知錯誤");

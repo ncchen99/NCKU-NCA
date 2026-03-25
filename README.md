@@ -78,6 +78,99 @@ npm run dev
 - 系統會直接回傳公開 URL，不使用簽名 URL。
 - 請先確保 R2 Bucket 已設定公開讀取（Public Access）。
 
+### 3.6 Cloudflare R2 詳細設定教學（含參數取得方式）
+
+本節會一步一步說明如何取得每一個 R2 參數。
+
+前置條件：
+
+- 你有 Cloudflare 帳號，且已啟用 R2。
+- 你有該 Cloudflare 帳號的 R2 操作權限。
+
+#### Step 1：建立 Bucket
+
+1. 進入 Cloudflare Dashboard。
+2. 左側選單選擇 `R2 Object Storage`。
+3. 點 `Create bucket`。
+4. 輸入 bucket 名稱（例如：`ncku-nca-images`）。
+
+你會得到：
+
+- `CLOUDFLARE_R2_BUCKET`：就是你建立的 bucket 名稱。
+
+#### Step 2：取得 Account ID
+
+1. 在 Cloudflare Dashboard 右側或帳號總覽頁可看到 `Account ID`。
+2. 複製該值。
+
+填入：
+
+- `CLOUDFLARE_R2_ACCOUNT_ID`。
+
+#### Step 3：建立 R2 API Token（Access Key / Secret）
+
+1. 進入 `R2 Object Storage`。
+2. 找到 `Manage R2 API tokens`（或 `API Tokens` 相關入口）。
+3. 建立一組可讀寫目標 bucket 的 token。
+4. 建立後會看到：
+   - `Access Key ID`
+   - `Secret Access Key`（通常只顯示一次，請立即保存）
+
+填入：
+
+- `CLOUDFLARE_R2_ACCESS_KEY_ID`：對應 Access Key ID。
+- `CLOUDFLARE_R2_SECRET_ACCESS_KEY`：對應 Secret Access Key。
+
+建議權限：
+
+- 最小權限原則，至少允許目標 bucket 的 `Object Read` 與 `Object Write`。
+
+#### Step 4：設定公開讀取網址（Public Base URL）
+
+目前系統是「上傳後直接回傳公開 URL」，所以需要可公開讀取的 base URL。
+
+常見做法：
+
+1. 直接使用 R2 的公開網域（若你已啟用 Public bucket）。
+2. 使用自訂網域（Custom Domain）指向 R2 bucket（建議正式環境）。
+
+設定要求：
+
+- `CLOUDFLARE_R2_PUBLIC_BASE_URL` 必須是「不含尾端斜線」的基底網址。
+- 範例：
+  - `https://pub-xxxxxxxx.r2.dev`
+  - `https://cdn.your-domain.com`
+
+#### Step 5：寫入環境變數
+
+將以下內容填入 `web/.env`：
+
+```bash
+CLOUDFLARE_R2_ACCOUNT_ID=你的AccountID
+CLOUDFLARE_R2_ACCESS_KEY_ID=你的AccessKeyID
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=你的SecretAccessKey
+CLOUDFLARE_R2_BUCKET=你的Bucket名稱
+CLOUDFLARE_R2_PUBLIC_BASE_URL=https://你的公開網域
+```
+
+另外在 `web/.env.example` 也保留同樣欄位（不放真值），避免團隊成員遺漏設定。
+
+#### Step 6：驗證設定是否成功
+
+1. 啟動網站：`cd web && npm run dev`。
+2. 以管理員登入後台。
+3. 到文章管理頁或 Markdown 編輯器上傳圖片。
+4. 成功後檢查：
+   - 回傳連結是否為你設定的 `CLOUDFLARE_R2_PUBLIC_BASE_URL` 網域。
+   - 瀏覽器可直接開啟該圖片 URL。
+
+若上傳失敗，優先檢查：
+
+- Access Key / Secret 是否貼錯。
+- Token 權限是否包含目標 bucket 的寫入權限。
+- Bucket 名稱是否一致。
+- Public Base URL 是否可公開存取。
+
 ## 4. 後台操作總覽
 
 後台主要入口（登入且具 admin 權限）：

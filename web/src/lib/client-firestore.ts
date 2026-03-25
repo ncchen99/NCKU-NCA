@@ -20,6 +20,15 @@ interface PublicPostResult {
     totalPages: number;
 }
 
+export interface PublicOpenAttendanceEvent {
+    id: string;
+    title: string;
+    description?: string | null;
+    closes_at_iso: string | null;
+    opens_at_iso: string | null;
+    is_attended?: boolean;
+}
+
 function toDate(value: unknown): Date | null {
     if (!value) return null;
     if (typeof value === "object" && value !== null && "toDate" in value) {
@@ -132,6 +141,21 @@ export interface ClubOption {
     category_code?: string;
 }
 
+export interface AdminClubItem {
+    id: string;
+    name: string;
+    name_en?: string;
+    category: string;
+    category_code: string;
+    status?: string;
+    email?: string;
+    description?: string;
+    is_active: boolean;
+    import_source: string;
+    imported_at: unknown;
+    website_url?: string;
+}
+
 export async function getActiveClubs(category?: string): Promise<ClubOption[]> {
     const { collection, getDocs, query, where } = await import("firebase/firestore");
     const db = await getClientDb();
@@ -152,6 +176,102 @@ export async function getActiveClubs(category?: string): Promise<ClubOption[]> {
             };
         })
         .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+export async function getAdminClubs(options?: {
+    category?: string;
+    isActive?: boolean;
+}): Promise<AdminClubItem[]> {
+    const { collection, getDocs, query, where } = await import("firebase/firestore");
+    const db = await getClientDb();
+
+    const clauses: Parameters<typeof query>[1][] = [];
+    if (options?.category) clauses.push(where("category", "==", options.category));
+    if (options?.isActive !== undefined) clauses.push(where("is_active", "==", options.isActive));
+
+    const clubsQuery =
+        clauses.length > 0
+            ? query(collection(db, "clubs"), ...clauses)
+            : query(collection(db, "clubs"));
+
+    const snapshot = await getDocs(clubsQuery);
+    return snapshot.docs
+        .map((doc) => {
+            const data = doc.data() as Record<string, unknown>;
+            return {
+                id: doc.id,
+                name: typeof data.name === "string" ? data.name : doc.id,
+                name_en: typeof data.name_en === "string" ? data.name_en : undefined,
+                category: typeof data.category === "string" ? data.category : "",
+                category_code:
+                    typeof data.category_code === "string" ? data.category_code : "",
+                status: typeof data.status === "string" ? data.status : undefined,
+                email: typeof data.email === "string" ? data.email : undefined,
+                description:
+                    typeof data.description === "string" ? data.description : undefined,
+                is_active: Boolean(data.is_active),
+                import_source:
+                    typeof data.import_source === "string" ? data.import_source : "manual",
+                imported_at: data.imported_at ?? null,
+                website_url:
+                    typeof data.website_url === "string" ? data.website_url : undefined,
+            } as AdminClubItem;
+        })
+        .sort((a, b) => a.name.localeCompare(b.name, "zh-Hant"));
+}
+
+/**
+ * 公開頁面使用：以前端 Firestore 直接讀取目前可簽到事件，
+ * 並可選擇性回傳當前使用者是否已簽到。
+ */
+export async function getOpenAttendanceEvents(options?: {
+    userUid?: string;
+}): Promise<PublicOpenAttendanceEvent[]> {
+    const { collection, getDocs, limit, query, where } = await import("firebase/firestore");
+    const db = await getClientDb();
+    const now = new Date();
+
+    const snapshot = await getDocs(
+        query(collection(db, "attendance_events"), where("status", "==", "open")),
+    );
+
+    const events: PublicOpenAttendanceEvent[] = [];
+
+    for (const eventDoc of snapshot.docs) {
+        const data = eventDoc.data() as Record<string, unknown>;
+        const opensAt = toDate(data.opens_at);
+        const closesAt = toDate(data.closes_at);
+        if (!opensAt || !closesAt) continue;
+        if (now < opensAt || now > closesAt) continue;
+
+        let isAttended = false;
+        if (options?.userUid) {
+            const recordSnapshot = await getDocs(
+                query(
+                    collection(db, "attendance_events", eventDoc.id, "records"),
+                    where("user_uid", "==", options.userUid),
+                    limit(1),
+                ),
+            );
+            isAttended = !recordSnapshot.empty;
+        }
+
+        events.push({
+            id: eventDoc.id,
+            title: typeof data.title === "string" ? data.title : "",
+            description:
+                typeof data.description === "string" ? data.description : null,
+            opens_at_iso: opensAt.toISOString(),
+            closes_at_iso: closesAt.toISOString(),
+            is_attended: isAttended,
+        });
+    }
+
+    return events.sort((a, b) => {
+        const aOpen = a.opens_at_iso ? new Date(a.opens_at_iso).getTime() : 0;
+        const bOpen = b.opens_at_iso ? new Date(b.opens_at_iso).getTime() : 0;
+        return bOpen - aOpen;
+    });
 }
 
 export interface ProfileUser extends Pick<

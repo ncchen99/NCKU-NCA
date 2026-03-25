@@ -253,3 +253,34 @@ body {
   transform: translateX(4px);
   opacity: 1;
 }
+
+/* 全站主要捲軸（viewport） */
+html,
+body {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary-light) var(--color-neutral-100);
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track {
+  background: var(--color-neutral-100);
+}
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb {
+  background-color: var(--color-primary-light);
+  border: 3px solid var(--color-neutral-100);
+  border-radius: 9999px;
+}
+
+html::-webkit-scrollbar-thumb:hover,
+body::-webkit-scrollbar-thumb:hover {
+  background-color: var(--color-primary);
+}

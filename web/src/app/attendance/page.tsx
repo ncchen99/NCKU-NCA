@@ -10,6 +10,7 @@ import { createLoginHref } from "@/lib/login-redirect";
 import { formatDateTimeZhTWFromUnknown } from "@/lib/datetime";
 import { Button } from "@/components/ui/button";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
+import { getOpenAttendanceEvents } from "@/lib/client-firestore";
 
 type OpenEvent = {
   id: string;
@@ -37,16 +38,10 @@ export default function AttendancePage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/public/attendance/open")
-      .then((r) => r.json())
-      .then((d: { events?: OpenEvent[]; user?: any }) => {
+    getOpenAttendanceEvents({ userUid: firebaseUser?.uid })
+      .then((openEvents) => {
         if (cancelled) return;
-        setEvents(d.events ?? []);
-        if (d.user) {
-          setClubId(d.user.club_id || "");
-          setUserName(d.user.display_name || "");
-          setDefaultClubName(d.user.club_name || undefined);
-        }
+        setEvents(openEvents);
       })
       .catch(() => {
         if (!cancelled) setEvents([]);
@@ -57,7 +52,7 @@ export default function AttendancePage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [firebaseUser?.uid]);
 
   // Use user profile from auth context as a fallback or for real-time updates
   useEffect(() => {
