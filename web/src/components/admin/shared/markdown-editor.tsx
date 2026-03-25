@@ -24,6 +24,7 @@ import {
   MinusIcon,
   TableCellsIcon,
 } from "@heroicons/react/20/solid";
+import { uploadAdminImage } from "@/lib/admin-image-upload";
 
 interface MarkdownEditorProps {
   value: string;
@@ -112,18 +113,7 @@ export function MarkdownEditor({
     setImageUploadError("");
     setImageUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/admin/uploads/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "圖片上傳失敗");
-      }
+      const data = await uploadAdminImage(file);
 
       const alt = file.name.replace(/\.[^/.]+$/, "") || "圖片";
       insertText(`![${alt}](${data.url})`);

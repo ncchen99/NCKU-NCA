@@ -52,6 +52,13 @@ service cloud.firestore {
       return resource.data;
     }
 
+    function isActiveClub(clubId) {
+      return clubId is string
+          && clubId != ''
+          && exists(/databases/$(database)/documents/clubs/$(clubId))
+          && get(/databases/$(database)/documents/clubs/$(clubId)).data.is_active == true;
+    }
+
     // ──────────────────────────────────────────────
     //  1. site_content — 前台頁面內容（CMS）
     //  讀取：所有人（公開網站內容）
@@ -98,12 +105,26 @@ service cloud.firestore {
                     && incomingData().uid == uid
                     && incomingData().email == request.auth.token.email;
 
-      // 一般用戶只能更新 display_name，不可自行變更角色或關聯社團
+      // 一般用戶只能更新個人資料欄位（display_name、club_id 等），
+      // 不可自行變更 role、email 等敏感欄位
       // 管理員可更新所有欄位（包含 role、club_id 等）
       allow update: if isAdmin()
                     || (isOwner(uid)
                         && incomingData().diff(existingData()).affectedKeys()
-                            .hasOnly(['display_name'])
+                            .hasOnly([
+                              'display_name',
+                              'club_id',
+                              'position_title',
+                              'department_grade',
+                              'profile_completed'
+                            ])
+                        && incomingData().display_name is string
+                        && incomingData().display_name.size() > 0
+                        && (
+                          !incomingData().diff(existingData()).affectedKeys().hasAny(['club_id'])
+                          || incomingData().club_id == ''
+                          || isActiveClub(incomingData().club_id)
+                        )
                        );
 
       allow delete: if isAdmin();

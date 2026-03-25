@@ -2,25 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { PublicLayout } from "@/components/layout/public-layout";
-import { ClubCategoryPicker } from "@/components/public/club-category-picker";
 import { useAuth } from "@/lib/auth-context";
 import { createLoginHref } from "@/lib/login-redirect";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 import { ClubSearchSelect } from "@/components/shared/club-search-select";
-import { useId } from "react";
 import { usePathname } from "next/navigation";
-
-type ProfileUser = {
-  display_name: string;
-  club_id: string;
-  position_title?: string;
-  department_grade?: string;
-  profile_completed?: boolean;
-  club_name?: string;
-  club_category?: string;
-};
+import { getActiveClubs, getProfileUser, saveProfileUser } from "@/lib/client-firestore";
 
 export default function ProfilePage() {
   const { firebaseUser, loading: authLoading, refreshUser } = useAuth();
@@ -44,11 +33,9 @@ export default function ProfilePage() {
       return;
     }
     let cancelled = false;
-    fetch("/api/auth/profile")
-      .then((r) => r.json())
-      .then((d: { user?: ProfileUser | null; error?: string }) => {
+    getProfileUser(firebaseUser.uid)
+      .then((u) => {
         if (cancelled) return;
-        const u = d.user;
         if (u) {
           setDisplayName(u.display_name ?? "");
           setClubId(u.club_id ?? "");
@@ -76,28 +63,28 @@ export default function ProfilePage() {
     setSuccess(false);
     setSaving(true);
     try {
-      const res = await fetch("/api/auth/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          display_name: displayName,
-          club_id: clubId,
-          position_title: positionTitle || undefined,
-          department_grade: departmentGrade || undefined,
-          profile_completed: true,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-      };
-      if (!res.ok) {
-        setError(data.error ?? "儲存失敗");
+      const clubs = await getActiveClubs();
+      const selectedClub = clubs.find((c) => c.id === clubId);
+      if (!selectedClub) {
+        setError("所選社團無效或已停用");
         return;
       }
+
+      await saveProfileUser({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? "",
+        displayName: displayName.trim(),
+        clubId,
+        positionTitle: positionTitle.trim() || undefined,
+        departmentGrade: departmentGrade.trim() || undefined,
+        profileCompleted: true,
+      });
+
+      setClubName(selectedClub.name);
       setSuccess(true);
       await refreshUser();
-    } catch {
-      setError("網路錯誤，請稍後再試。");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "網路錯誤，請稍後再試。");
     } finally {
       setSaving(false);
     }

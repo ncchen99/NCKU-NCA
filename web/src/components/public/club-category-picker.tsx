@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { CLUB_CATEGORIES } from "@/lib/club-categories";
 import { AppSelect, AppSelectOption } from "@/components/ui/app-select";
+import { getActiveClubs } from "@/lib/client-firestore";
 
 interface ClubOption {
   id: string;
@@ -43,12 +44,10 @@ export function ClubCategoryPicker({
     }
     let cancelled = false;
     setLoadingClubs(true);
-    const q = encodeURIComponent(categoryName);
-    fetch(`/api/public/clubs?category=${q}`)
-      .then((r) => r.json())
-      .then((d: { clubs?: ClubOption[] }) => {
+    getActiveClubs(categoryName)
+      .then((clubList) => {
         if (cancelled) return;
-        setClubs(d.clubs ?? []);
+        setClubs(clubList);
       })
       .catch(() => {
         if (!cancelled) setClubs([]);
@@ -66,7 +65,7 @@ export function ClubCategoryPicker({
     label: `${c.code}. ${c.name}`,
   }));
 
-  const clubOptions: AppSelectOption[] = 
+  const clubOptions: AppSelectOption[] =
     clubs.length > 0
       ? clubs.map((c) => ({ value: c.id, label: c.name }))
       : valueClubId && defaultClubName

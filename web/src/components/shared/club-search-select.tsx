@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { AppSelect } from "@/components/ui/app-select";
+import { getActiveClubs } from "@/lib/client-firestore";
 
 interface Club {
   id: string;
@@ -77,10 +78,8 @@ export function ClubSearchSelect({
 
     currentFetchPromise = (async () => {
       try {
-        const res = await fetch("/api/public/clubs");
-        const data = await res.json();
-        const list = data.clubs || [];
-        
+        const list = await getActiveClubs();
+
         // Update caches
         memoryCache = { data: list, timestamp: Date.now() };
         try {
@@ -88,7 +87,7 @@ export function ClubSearchSelect({
         } catch (e) {
           console.warn("Failed to write to club cache:", e);
         }
-        
+
         return list;
       } catch (err) {
         console.error("Failed to fetch clubs for select:", err);

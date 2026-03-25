@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { PublicLayout } from "@/components/layout/public-layout";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import { getPublicPosts } from "@/lib/client-firestore";
 
 type Category = "全部" | "公告" | "活動" | "重要";
 
@@ -51,17 +52,14 @@ export default function NewsPage() {
     setLoading(true);
     try {
       const tagParam = TAG_CATEGORIES.find((c) => c.label === activeCategory);
-      const params = new URLSearchParams({
+      const data = await getPublicPosts({
         category: "news",
-        page: String(page),
-        per_page: String(perPage),
+        page,
+        perPage,
+        tag: tagParam?.tag,
       });
-      if (tagParam?.tag) params.set("tag", tagParam.tag);
-
-      const res = await fetch(`/api/public/posts?${params}`);
-      const data = await res.json();
-      setPosts(data.posts ?? []);
-      setTotalPages(data.total_pages ?? 1);
+      setPosts(data.posts);
+      setTotalPages(data.totalPages);
     } catch {
       setPosts([]);
       setTotalPages(1);
@@ -104,8 +102,8 @@ export default function NewsPage() {
                   setPage(1);
                 }}
                 className={`inline-flex h-[32px] items-center rounded-full px-3 text-xs font-[500] transition-colors ${activeCategory === cat.label
-                    ? "bg-primary text-white"
-                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                  ? "bg-primary text-white"
+                  : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                   }`}
               >
                 {cat.label}
@@ -188,8 +186,8 @@ export default function NewsPage() {
                   key={p}
                   onClick={() => setPage(p)}
                   className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors ${page === p
-                      ? "bg-primary text-white"
-                      : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
+                    ? "bg-primary text-white"
+                    : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
                     }`}
                 >
                   {p}

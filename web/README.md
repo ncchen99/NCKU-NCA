@@ -1,5 +1,25 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Cloudflare R2 Image Upload
+
+Admin image uploads now use Cloudflare R2 via the API route `/api/admin/uploads/image`.
+
+Required environment variables:
+
+```bash
+CLOUDFLARE_R2_ACCOUNT_ID=
+CLOUDFLARE_R2_ACCESS_KEY_ID=
+CLOUDFLARE_R2_SECRET_ACCESS_KEY=
+CLOUDFLARE_R2_BUCKET=
+CLOUDFLARE_R2_PUBLIC_BASE_URL=
+```
+
+Notes:
+
+- `CLOUDFLARE_R2_PUBLIC_BASE_URL` should point to your public bucket/custom domain, for example `https://cdn.example.com`.
+- Uploaded objects are expected to be publicly readable (no signed URL flow).
+- The app uses this public base URL for both returned image URLs and `next/image` remote host allowlist.
+
 ## Getting Started
 
 First, run the development server:

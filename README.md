@@ -63,6 +63,21 @@ npm run dev
 
 此變數會被 `scripts/seed-firestore.ts` 使用，用於寫入 Firestore。
 
+### 3.5 Cloudflare R2 圖片上傳環境變數
+
+若要啟用後台圖片上傳（公告內容內文圖片、封面圖），請在 `web/.env` 設定：
+
+- `CLOUDFLARE_R2_ACCOUNT_ID`
+- `CLOUDFLARE_R2_ACCESS_KEY_ID`
+- `CLOUDFLARE_R2_SECRET_ACCESS_KEY`
+- `CLOUDFLARE_R2_BUCKET`
+- `CLOUDFLARE_R2_PUBLIC_BASE_URL`（例如 `https://<public-host>`）
+
+說明：
+
+- 系統會直接回傳公開 URL，不使用簽名 URL。
+- 請先確保 R2 Bucket 已設定公開讀取（Public Access）。
+
 ## 4. 後台操作總覽
 
 後台主要入口（登入且具 admin 權限）：

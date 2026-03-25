@@ -1,14 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { verifyAdmin, unauthorizedResponse } from "@/lib/admin-auth";
-import { getAdminStorage } from "@/lib/firebase-admin";
+import { uploadPublicObjectToR2 } from "@/lib/cloudflare-r2";
 
 const MAX_IMAGE_SIZE_BYTES = 8 * 1024 * 1024;
-
-function buildFirebasePublicUrl(bucketName: string, objectPath: string): string {
-    const encodedPath = encodeURIComponent(objectPath);
-    return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
-}
 
 function sanitizeName(name: string): string {
     return name
@@ -57,20 +52,12 @@ export async function POST(request: NextRequest) {
         const fileName = `${Date.now()}-${safeName || "image"}.webp`;
         const objectPath = `posts/${yyyy}/${mm}/${fileName}`;
 
-        const bucket = getAdminStorage().bucket();
-        const storageFile = bucket.file(objectPath);
-
-        await storageFile.save(webpBuffer, {
-            metadata: {
-                contentType: "image/webp",
-                cacheControl: "public, max-age=31536000, immutable",
-            },
-            resumable: false,
-            validation: "crc32c",
+        const url = await uploadPublicObjectToR2({
+            key: objectPath,
+            body: webpBuffer,
+            contentType: "image/webp",
+            cacheControl: "public, max-age=31536000, immutable",
         });
-
-        const bucketName = bucket.name;
-        const url = buildFirebasePublicUrl(bucketName, objectPath);
 
         return NextResponse.json({
             url,

@@ -27,6 +27,7 @@ import {
   type TabItem,
 } from "@/components/admin/shared";
 import { formatTimestamp, adminFetch, timestampToMs } from "@/lib/admin-utils";
+import { uploadAdminImage } from "@/lib/admin-image-upload";
 import { toast } from "@/components/ui/use-toast";
 
 type PostStatus = "all" | "published" | "draft";
@@ -380,16 +381,7 @@ export default function PostsPage() {
   async function handleCoverUpload(file: File) {
     setCoverUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/uploads/image", {
-        method: "POST",
-        body: formData,
-      });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || "封面圖片上傳失敗");
-      }
+      const data = await uploadAdminImage(file);
       updateForm({ cover_image_url: data.url });
       toast("封面圖片已上傳", "success");
     } catch (err) {
