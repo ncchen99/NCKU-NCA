@@ -78,10 +78,10 @@ export default async function ActivityArticlePage({ params }: Props) {
   const publishedAt = anyTimestampToDate(post.published_at);
   const dateStr = publishedAt
     ? publishedAt.toLocaleDateString("zh-TW", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
     : "—";
 
   const badgeLabel = (() => {
@@ -105,10 +105,10 @@ export default async function ActivityArticlePage({ params }: Props) {
           title: p.title,
           date: d
             ? d.toLocaleDateString("zh-TW", {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              })
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
             : "—",
         };
       });
