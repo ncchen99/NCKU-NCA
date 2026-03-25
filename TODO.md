@@ -134,15 +134,15 @@
 ### 3.2 網站內容管理 `/admin/content`
 - [x] 頁面列表 UI（圖示 + 描述 + 編輯按鈕）
 - [x] 各頁面內容 CRUD（FormModal 內嵌 Markdown 編輯）
-- [ ] 富文本 Markdown 編輯器（Milkdown 或 TipTap）
-- [ ] 圖片上傳整合（Firebase Storage）
+- [x] 富文本 Markdown 編輯器（Milkdown 或 TipTap）
+- [x] 圖片上傳整合（Firebase Storage）
 - [x] 儲存並發布 + ISR 觸發
 
 ### 3.3 文章管理 `/admin/posts`
 - [x] 文章列表 UI（狀態 tabs + 搜尋 + 表格 + mock data）
 - [x] 文章 CRUD（新增 / 編輯 / 刪除 Modal）
 - [x] 狀態切換（draft ↔ published）
-- [ ] Markdown 編輯器 + 封面圖上傳
+- [x] Markdown 編輯器 + 封面圖上傳
 - [ ] Slug 自動生成優化（可評估翻譯服務或 LLM，自動產生多語意/可讀性更高的 slug）
 
 ### 3.4 表單管理 `/admin/forms`
@@ -151,8 +151,8 @@
 - [x] 表單欄位拖曳排序（JSON Schema 編輯器）
 - [x] 條件邏輯設定 UI
 - [x] 表單模板（社博 / 寒假場協 / 一般報名 / 出席調查）
-- [ ] 回覆管理頁面 `/admin/forms/[form_id]`
-- [ ] 回覆匯出 CSV
+- [x] 回覆管理頁面 `/admin/forms/[form_id]`
+- [x] 回覆匯出 CSV
 
 ### 3.5 保證金管理 `/admin/deposit`
 - [x] 保證金列表 UI（狀態 tabs + 表格 + mock data）

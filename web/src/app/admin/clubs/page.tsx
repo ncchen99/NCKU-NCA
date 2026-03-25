@@ -598,7 +598,7 @@ export default function ClubsPage() {
       {/* ── Import Modal ─────────────────────────────────────────── */}
       <Modal
         open={importOpen}
-        onClose={importLoading ? () => {} : closeImport}
+        onClose={importLoading ? () => { } : closeImport}
         title="匯入社團名單"
       >
         {importStep === "upload" && (
@@ -629,11 +629,10 @@ export default function ClubsPage() {
               onDragOver={handleUploadAreaDragOver}
               onDragLeave={handleUploadAreaDragLeave}
               onDrop={handleUploadAreaDrop}
-              className={`flex w-full flex-col items-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 text-neutral-500 transition-colors ${
-                isDragOver
+              className={`flex w-full flex-col items-center gap-3 rounded-lg border-2 border-dashed px-6 py-10 text-neutral-500 transition-colors ${isDragOver
                   ? "border-primary bg-primary/5 text-primary"
                   : "border-neutral-300 hover:border-primary hover:text-primary"
-              }`}
+                }`}
             >
               <DocumentArrowUpIcon className="h-10 w-10" />
               <span className="text-sm font-medium">拖拉檔案到這裡，或點擊選擇檔案</span>

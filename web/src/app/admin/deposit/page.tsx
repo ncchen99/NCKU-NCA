@@ -13,7 +13,6 @@ import {
   AdminErrorState,
   ConfirmDialog,
   FormModal,
-  FormField,
   AdminTableCheckbox,
   AdminDataTable,
   adminSortableHeader,
@@ -590,10 +589,9 @@ export default function DepositPage() {
         title="編輯備註"
         submitLabel="儲存備註"
         loading={notesLoading}
+        className="max-w-3xl"
       >
-        <FormField
-          as="textarea"
-          label="備註"
+        <textarea
           value={notesTarget?.notes ?? ""}
           onChange={(e) =>
             setNotesTarget((prev) =>
@@ -601,7 +599,8 @@ export default function DepositPage() {
             )
           }
           placeholder="輸入備註內容..."
-          className="min-h-[120px]"
+          className="h-[48vh] w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-neutral-950 outline-none transition-colors placeholder:text-neutral-400 focus:border-primary focus:ring-1 focus:ring-primary/30"
+          aria-label="備註"
         />
       </FormModal>
     </>

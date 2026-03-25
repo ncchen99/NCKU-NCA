@@ -314,8 +314,9 @@ export function FormClient({
   );
 
   // 驗證
-  function validate(): boolean {
+  function validate(): { isValid: boolean; hasRequiredMissing: boolean } {
     const errs: Record<string, string> = {};
+    let hasRequiredMissing = false;
     for (const field of fields) {
       if (!shouldShow(field)) continue;
       if (field.type === "section_header") continue;
@@ -327,6 +328,7 @@ export function FormClient({
           val === "" ||
           (Array.isArray(val) && val.length === 0)
         ) {
+          hasRequiredMissing = true;
           errs[field.id] = `${field.label} 為必填欄位`;
         }
       }
@@ -337,15 +339,22 @@ export function FormClient({
       }
     }
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    return { isValid: Object.keys(errs).length === 0, hasRequiredMissing };
   }
 
   async function handleSubmit() {
     if (!user) return;
-    if (!validate()) return;
+
+    setSubmitError("");
+    const validation = validate();
+    if (!validation.isValid) {
+      if (validation.hasRequiredMissing) {
+        setSubmitError("尚有必填欄位未填寫，請先完成標示 * 的欄位後再提交。");
+      }
+      return;
+    }
 
     setSubmitting(true);
-    setSubmitError("");
 
     try {
       // 取得 club_id：如果有 club_picker 欄位就用它的值，否則用使用者的 club_id

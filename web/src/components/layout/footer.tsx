@@ -47,7 +47,7 @@ export function Footer() {
             </Link>
 
             <p className="mt-4 max-w-[40ch] text-[13px] leading-6 text-neutral-600">
-              國立成功大學社團聯合會，致力於促進校內社團交流與合作，提供社團發展支援與資源整合服務。
+              成大學生社團聯合會作為綜理學生社團事務之學生自治組織，對內代表學生社團向校方維護權益，對外則協助爭取引進外部資源
             </p>
 
             <div className="mt-5 flex items-center gap-2">

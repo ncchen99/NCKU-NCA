@@ -202,11 +202,21 @@ export default async function NewsArticlePage({ params }: Props) {
                         href={`/news/${r.slug}`}
                         className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)] hover:-translate-y-0.5"
                       >
-                        {r.cover && (
-                          <div className="aspect-[2/1] bg-neutral-100 overflow-hidden">
-                            <img src={r.cover} alt={r.title} className="h-full w-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                        )}
+                        <div className="aspect-[2/1] overflow-hidden bg-neutral-100">
+                          {r.cover ? (
+                            <img
+                              src={r.cover}
+                              alt={r.title}
+                              className="h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-end bg-gradient-to-br from-neutral-200 via-neutral-100 to-white p-4">
+                              <span className="font-mono text-[10px] tracking-wide text-neutral-500">
+                                NCKU NCA NEWS
+                              </span>
+                            </div>
+                          )}
+                        </div>
                         <div className="p-4">
                           <time className="font-mono text-[10px] text-neutral-400">
                             {r.date}

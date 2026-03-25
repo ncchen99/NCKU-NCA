@@ -718,7 +718,7 @@ export default function PostsPage() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-neutral-700">
-              封面圖片 URL
+              封面圖片
             </label>
             <div className="space-y-3">
               <input
@@ -780,17 +780,9 @@ export default function PostsPage() {
                   </div>
                 )}
               </div>
-              <input
-                value={form.cover_image_url}
-                onChange={(e) =>
-                  updateForm({ cover_image_url: (e.target as HTMLInputElement).value })
-                }
-                placeholder="https://..."
-                className="h-10 w-full rounded-lg border border-border bg-white px-3 text-[13px] text-neutral-900 transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
             </div>
             <p className="mt-1 text-xs text-neutral-400">
-              可拖拉上傳，或直接貼上圖片 URL。
+              請直接上傳圖片作為封面。
             </p>
           </div>
 
