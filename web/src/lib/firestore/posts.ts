@@ -225,8 +225,8 @@ export async function updatePost(
     const db = getAdminDb();
     const updateData: Partial<Post> = { ...data };
     delete updateData.id;
-    const updatePayload: Partial<Post> & {
-      published_at?: FirebaseFirestore.FieldValue;
+    const updatePayload: Omit<Partial<Post>, "published_at"> & {
+      published_at?: Post["published_at"] | FirebaseFirestore.FieldValue;
     } = { ...updateData };
 
     // 如果狀態設為「已發布」，且文章原本沒有發布時間，則補上發布時間

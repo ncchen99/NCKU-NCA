@@ -94,17 +94,19 @@ export default async function ActivityArticlePage({ params }: Props) {
   })();
 
   // 取得相關文章
-  let relatedPosts: { slug: string; title: string; date: string }[] = [];
+  let relatedPosts: { slug: string; title: string; date: string; excerpt: string; cover?: string | null }[] = [];
   try {
-    const { posts: recent } = await getPublishedPosts({ category: "activity_review", limit: 4 });
+    const { posts: recent } = await getPublishedPosts({ category: "activity_review", limit: 6 });
     relatedPosts = recent
       .filter((p) => p.slug !== slug)
-      .slice(0, 2)
+      .slice(0, 3)
       .map((p) => {
         const d = anyTimestampToDate(p.published_at);
         return {
           slug: p.slug,
           title: p.title,
+          cover: p.cover_image_url,
+          excerpt: p.content_markdown?.substring(0, 60)?.replace(/[#*_>\-\[\]`]/g, "") ?? "",
           date: d
             ? d.toLocaleDateString("zh-TW", {
               year: "numeric",
@@ -190,41 +192,61 @@ export default async function ActivityArticlePage({ params }: Props) {
                 <p className="text-[15px] text-neutral-600">此文章尚無內容。</p>
               )}
 
-              <Link
-                href="/activities"
-                className="group mt-12 inline-flex items-center gap-1 text-sm font-[450] text-primary hover:underline"
-              >
-                <ArrowLongLeftIcon className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
-                返回活動回顧
-              </Link>
-            </article>
-
-            {/* Sidebar */}
-            {relatedPosts.length > 0 && (
-              <aside className="hidden w-64 shrink-0 lg:block">
-                <div className="sticky top-20">
-                  <h2 className="font-mono text-[11px] font-semibold uppercase tracking-wide text-neutral-950">
-                    其他活動
-                  </h2>
-                  <div className="mt-4 flex flex-col gap-3">
+              {/* Related posts at the bottom */}
+              {relatedPosts.length > 0 && (
+                <div className="mt-20 border-t border-neutral-100 pt-12">
+                  <div className="mt-6 font-bold text-[24px] tracking-tight text-neutral-950">
+                    相關文章
+                  </div>
+                  <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                     {relatedPosts.map((r) => (
                       <Link
                         key={r.slug}
                         href={`/activities/${r.slug}`}
-                        className="block rounded-lg px-3 py-3 transition-colors hover:bg-neutral-50"
+                        className="group flex flex-col overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)] hover:-translate-y-0.5"
                       >
-                        <time className="font-mono text-[11px] text-neutral-400">
-                          {r.date}
-                        </time>
-                        <p className="mt-1 text-[13px] font-medium leading-snug text-neutral-700">
-                          {r.title}
-                        </p>
+                        <div className="aspect-[2/1] overflow-hidden bg-neutral-100">
+                          {r.cover ? (
+                            <img
+                              src={r.cover}
+                              alt={r.title}
+                              className="h-full w-full object-cover opacity-90 transition-opacity group-hover:opacity-100"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-end bg-gradient-to-br from-neutral-200 via-neutral-100 to-white p-4">
+                              <span className="font-mono text-[10px] tracking-wide text-neutral-500">
+                                NCKU NCA ACTIVITY
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-4">
+                          <time className="font-mono text-[10px] text-neutral-400">
+                            {r.date}
+                          </time>
+                          <p className="mt-1 text-[13.5px] font-semibold leading-[1.4] text-neutral-800 group-hover:text-primary transition-colors line-clamp-2">
+                            {r.title}
+                          </p>
+                          <p className="mt-1.5 text-[12px] text-neutral-500 line-clamp-1">
+                            {r.excerpt}
+                          </p>
+                        </div>
                       </Link>
                     ))}
                   </div>
                 </div>
-              </aside>
-            )}
+              )}
+
+              <div className="mt-16 flex border-t border-neutral-100 pt-8">
+                <Link
+                  href="/activities"
+                  className="group inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition-colors hover:text-primary"
+                >
+                  <ArrowLongLeftIcon className="h-4 w-4 transition-transform duration-200 group-hover:-translate-x-1" />
+                  返回活動回顧
+                </Link>
+              </div>
+            </article>
           </div>
         </div>
       </section>
