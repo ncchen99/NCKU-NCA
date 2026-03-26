@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { SectionHeading, ViewAllLink } from "@/components/ui/section-heading";
-import { ArrowLongRightIcon } from "@heroicons/react/20/solid";
 import { getPublishedPosts } from "@/lib/firestore/posts";
 import { anyTimestampToDate } from "@/lib/datetime";
 
 function GhostTag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium text-neutral-600">
+    <span className="-ml-1 rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium text-neutral-600">
       {children}
     </span>
   );
@@ -64,16 +63,16 @@ async function ActivityPreviewSection() {
         : "lg:grid-rows-1";
   const sideCardHeightClass =
     sideCardRows === 3
-      ? "lg:h-[150px]"
+      ? "lg:h-[146px]"
       : sideCardRows === 2
-        ? "lg:h-[185px]"
-        : "lg:h-[170px]";
+        ? "lg:h-[180px]"
+        : "lg:h-[162px]";
   const featuredHeightClass =
     sideCardRows === 3
-      ? "lg:h-[calc(150px*3+1rem*2)]"
+      ? "lg:h-[calc(146px*3+1rem*2)]"
       : sideCardRows === 2
-        ? "lg:h-[calc(185px*2+1rem)]"
-        : "lg:h-[170px]";
+        ? "lg:h-[calc(180px*2+1rem)]"
+        : "lg:h-[162px]";
   const featuredImageHeightClass =
     sideCardRows === 3
       ? "lg:h-[250px]"
@@ -98,8 +97,7 @@ async function ActivityPreviewSection() {
         ) : (
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             {/* Featured card */}
-            <Link
-              href={`/activities/${featured.slug}`}
+            <div
               className={`group block overflow-hidden rounded-lg bg-white shadow-[0_0_0_1px_rgba(10,10,10,0.08)] transition-all hover:shadow-[0_4px_12px_-2px_rgba(10,10,10,0.12),0_0_0_1px_rgba(10,10,10,0.08)] ${featuredHeightClass}`}
             >
               <article className="flex h-full flex-col">
@@ -119,7 +117,7 @@ async function ActivityPreviewSection() {
                     </div>
                   )}
                 </div>
-                <div className="flex min-h-0 flex-1 flex-col p-4">
+                <div className="flex min-h-0 flex-1 flex-col p-6">
                   <div className="flex items-center gap-2">
                     <GhostTag>{featured.tag}</GhostTag>
                     <time className="font-mono text-[11px] text-neutral-400">
@@ -132,13 +130,9 @@ async function ActivityPreviewSection() {
                   <p className={`mt-1.5 line-clamp-4 text-[13px] leading-[21px] text-neutral-600 text-pretty ${featuredExcerptClampClass}`}>
                     {featured.excerpt}
                   </p>
-                  <div className="group mt-auto inline-flex items-center gap-1 self-end pt-3 text-sm font-[450] text-primary transition-colors hover:text-primary-dark">
-                    閱讀全文
-                    <ArrowLongRightIcon className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                  </div>
                 </div>
               </article>
-            </Link>
+            </div>
 
             {/* Side cards */}
             <div className={`grid h-full gap-4 ${rightGridRowsClass}`}>
@@ -165,7 +159,7 @@ async function ActivityPreviewSection() {
                         </div>
                       )}
                     </div>
-                    <div className="flex flex-1 flex-col justify-center p-3.5">
+                    <div className="flex flex-1 flex-col justify-center p-6">
                       <div className="flex items-center gap-2">
                         <GhostTag>{item.tag}</GhostTag>
                         <time className="font-mono text-[11px] text-neutral-400">

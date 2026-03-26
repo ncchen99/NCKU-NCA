@@ -25,6 +25,21 @@ interface PostListingProps {
 const PER_PAGE = 6;
 const ALL_TAG_LABEL = "全部";
 const OTHER_TAG_LABEL = "其他";
+const ALL_TAG_VALUE = "__all__";
+const OTHER_TAG_VALUE = "__other__";
+
+interface TagFilter {
+    value: string;
+    label: string;
+}
+
+function GhostTag({ children }: { children: React.ReactNode }) {
+    return (
+        <span className="-ml-1 rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium text-neutral-600">
+            {children}
+        </span>
+    );
+}
 
 function getTopTags(items: PostListItem[], topN = 3): string[] {
     const counts = new Map<string, number>();
@@ -43,7 +58,11 @@ function getTopTags(items: PostListItem[], topN = 3): string[] {
 
 function buildListingHref(basePath: string, tag: string, page: number): string {
     const params = new URLSearchParams();
-    if (tag !== ALL_TAG_LABEL) params.set("tag", tag);
+    if (tag === OTHER_TAG_VALUE) {
+        params.set("tag", OTHER_TAG_VALUE);
+    } else if (tag !== ALL_TAG_VALUE) {
+        params.set("tag", tag);
+    }
     if (page > 1) params.set("page", String(page));
 
     const query = params.toString();
@@ -59,26 +78,64 @@ export function PostListing({
 }: PostListingProps) {
     const topTags = useMemo(() => getTopTags(posts), [posts]);
     const topTagSet = useMemo(() => new Set(topTags), [topTags]);
-    const tagFilters = useMemo(
-        () => [ALL_TAG_LABEL, ...topTags, OTHER_TAG_LABEL],
-        [topTags]
+    const hasOtherBucket = useMemo(
+        () => posts.some((post) => !topTagSet.has(post.primary_tag)),
+        [posts, topTagSet]
     );
+    const tagFilters = useMemo<TagFilter[]>(() => {
+        const filters: TagFilter[] = [
+            { value: ALL_TAG_VALUE, label: ALL_TAG_LABEL },
+            ...topTags.map((tag) => ({ value: tag, label: tag })),
+        ];
+
+        if (hasOtherBucket) {
+            filters.push({ value: OTHER_TAG_VALUE, label: OTHER_TAG_LABEL });
+        }
+
+        return filters;
+    }, [hasOtherBucket, topTags]);
+
+    const normalizedInitialTag = useMemo(() => {
+        const incomingTag = initialTag?.trim();
+        if (!incomingTag || incomingTag === ALL_TAG_LABEL || incomingTag === ALL_TAG_VALUE) {
+            return ALL_TAG_VALUE;
+        }
+
+        if (incomingTag === OTHER_TAG_VALUE) {
+            return hasOtherBucket ? OTHER_TAG_VALUE : ALL_TAG_VALUE;
+        }
+
+        if (incomingTag === OTHER_TAG_LABEL && hasOtherBucket && !topTagSet.has(OTHER_TAG_LABEL)) {
+            return OTHER_TAG_VALUE;
+        }
+
+        return topTagSet.has(incomingTag) ? incomingTag : ALL_TAG_VALUE;
+    }, [hasOtherBucket, initialTag, topTagSet]);
 
     const [activeTag, setActiveTag] = useState<string>(
-        initialTag?.trim() || ALL_TAG_LABEL
+        normalizedInitialTag
     );
     const [page, setPage] = useState<number>(() => {
         if (!Number.isFinite(initialPage) || !initialPage) return 1;
         return Math.max(1, Math.floor(initialPage));
     });
 
-    const resolvedActiveTag = tagFilters.includes(activeTag)
+    useEffect(() => {
+        setActiveTag(normalizedInitialTag);
+    }, [normalizedInitialTag]);
+
+    const availableTagValues = useMemo(
+        () => new Set(tagFilters.map((filter) => filter.value)),
+        [tagFilters]
+    );
+
+    const resolvedActiveTag = availableTagValues.has(activeTag)
         ? activeTag
-        : ALL_TAG_LABEL;
+        : ALL_TAG_VALUE;
 
     const visiblePosts = useMemo(() => {
-        if (resolvedActiveTag === ALL_TAG_LABEL) return posts;
-        if (resolvedActiveTag === OTHER_TAG_LABEL) {
+        if (resolvedActiveTag === ALL_TAG_VALUE) return posts;
+        if (resolvedActiveTag === OTHER_TAG_VALUE) {
             return posts.filter((post) => !topTagSet.has(post.primary_tag));
         }
         return posts.filter((post) => post.primary_tag === resolvedActiveTag);
@@ -103,13 +160,13 @@ export function PostListing({
         <>
             <div className="mb-8 grid grid-cols-3 gap-1.5 sm:flex sm:flex-wrap sm:items-center sm:gap-2">
                 {tagFilters.map((tag) => {
-                    const isActive = resolvedActiveTag === tag;
+                    const isActive = resolvedActiveTag === tag.value;
                     return (
                         <button
-                            key={tag}
+                            key={tag.value}
                             type="button"
                             onClick={() => {
-                                setActiveTag(tag);
+                                setActiveTag(tag.value);
                                 setPage(1);
                             }}
                             aria-pressed={isActive}
@@ -117,9 +174,9 @@ export function PostListing({
                                     ? "bg-primary text-white"
                                     : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                                 }`}
-                            title={tag}
+                            title={tag.label}
                         >
-                            <span className="block truncate">{tag}</span>
+                            <span className="block truncate">{tag.label}</span>
                         </button>
                     );
                 })}
@@ -132,7 +189,6 @@ export function PostListing({
             ) : (
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
                     {pagedPosts.map((item) => {
-                        const badge = item.primary_tag;
                         return (
                             <Link
                                 key={item.id}
@@ -148,17 +204,14 @@ export function PostListing({
                                             className="h-full w-full object-cover"
                                         />
                                     ) : null}
-                                    <span
-                                        className={`absolute left-3 top-3 rounded-full px-2.5 py-1 font-mono text-[10px] font-medium text-white ${badge === OTHER_TAG_LABEL ? "bg-neutral-600" : "bg-primary"
-                                            }`}
-                                    >
-                                        {badge}
-                                    </span>
                                 </div>
                                 <div className="bg-white p-4">
-                                    <time className="font-mono text-[11px] text-neutral-400">
-                                        {item.published_at_display}
-                                    </time>
+                                    <div className="flex items-center gap-2">
+                                        <GhostTag>{item.primary_tag}</GhostTag>
+                                        <time className="font-mono text-[11px] text-neutral-400">
+                                            {item.published_at_display}
+                                        </time>
+                                    </div>
                                     <h3 className="mt-2 text-[14px] font-semibold tracking-tight text-neutral-950 transition-colors group-hover:text-primary">
                                         {item.title}
                                     </h3>

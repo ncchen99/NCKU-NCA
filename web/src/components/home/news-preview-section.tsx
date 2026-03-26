@@ -3,6 +3,14 @@ import { SectionHeading, ViewAllLink } from "@/components/ui/section-heading";
 import { getPublishedPosts } from "@/lib/firestore/posts";
 import { anyTimestampToDate } from "@/lib/datetime";
 
+function GhostTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="-ml-1 rounded-full border border-border px-2.5 py-0.5 font-mono text-[10px] font-medium text-neutral-600">
+      {children}
+    </span>
+  );
+}
+
 async function NewsPreviewSection() {
   let news: {
     slug: string;
@@ -79,14 +87,14 @@ async function NewsPreviewSection() {
                       className="h-full w-full object-cover"
                     />
                   ) : null}
-                  <span className="absolute left-3 top-3 rounded-full bg-primary px-2.5 py-1 font-mono text-[10px] font-medium text-white">
-                    {item.category}
-                  </span>
                 </div>
-                <div className="bg-white p-4">
-                  <time className="font-mono text-[11px] text-neutral-400">
-                    {item.date}
-                  </time>
+                <div className="bg-white p-6">
+                  <div className="flex items-center gap-2">
+                    <GhostTag>{item.category}</GhostTag>
+                    <time className="font-mono text-[11px] text-neutral-400">
+                      {item.date}
+                    </time>
+                  </div>
                   <h3 className="mt-2 text-[14px] font-semibold tracking-tight text-neutral-950 group-hover:text-primary transition-colors">
                     {item.title}
                   </h3>
