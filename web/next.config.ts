@@ -16,11 +16,12 @@ const r2PublicHostname =
 const isDev = process.env.NODE_ENV !== "production";
 const cspDirectives = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+  `script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data: https:",
   "connect-src 'self' https: wss:",
+  "frame-src 'self' https://accounts.google.com https://apis.google.com https://*.firebaseapp.com",
   "frame-ancestors 'none'",
   "object-src 'none'",
   "base-uri 'self'",
