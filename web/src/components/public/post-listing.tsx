@@ -171,8 +171,8 @@ export function PostListing({
                             }}
                             aria-pressed={isActive}
                             className={`inline-flex h-8 w-full min-w-0 items-center justify-center rounded-full px-2 text-[11px] font-[500] whitespace-nowrap transition-colors sm:h-[34px] sm:w-auto sm:px-3 sm:text-xs ${isActive
-                                    ? "bg-primary text-white"
-                                    : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
+                                ? "bg-primary text-white"
+                                : "bg-neutral-100 text-neutral-700 hover:bg-neutral-200"
                                 }`}
                             title={tag.label}
                         >
@@ -246,8 +246,8 @@ export function PostListing({
                                 onClick={() => setPage(p)}
                                 aria-current={isCurrent ? "page" : undefined}
                                 className={`inline-flex h-9 w-9 items-center justify-center rounded-full text-[13px] font-medium transition-colors ${isCurrent
-                                        ? "bg-primary text-white"
-                                        : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
+                                    ? "bg-primary text-white"
+                                    : "text-neutral-600 ring-1 ring-neutral-950/8 hover:bg-neutral-50"
                                     }`}
                             >
                                 {p}
