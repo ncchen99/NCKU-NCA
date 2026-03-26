@@ -104,7 +104,7 @@ export function Footer() {
               </li>
               <li>
                 <span className="text-[13px] text-neutral-600">
-                  台南市東區大學路1號學生活動中心2樓社團聯合會辦公室
+                  台南市東區大學路 1 號學生活動中心 2 樓社團聯合會辦公室
                 </span>
               </li>
 
