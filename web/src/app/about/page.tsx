@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { PublicLayout } from "@/components/layout/public-layout";
 import { CmsMarkdownWithToc } from "@/components/public/cms-markdown-with-toc";
 import { getSiteContent } from "@/lib/firestore/site-content";
-
+ 
+export const revalidate = 31_536_000;
+ 
 export const metadata: Metadata = {
   title: "關於我們",
   description:

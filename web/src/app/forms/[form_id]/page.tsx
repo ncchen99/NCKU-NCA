@@ -6,7 +6,9 @@ import { anyTimestampToDate, formatDateTimeZhTW } from "@/lib/datetime";
 import { buildOgImageUrl } from "@/lib/seo";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 import { FormClient } from "./form-client";
-
+ 
+export const revalidate = 31_536_000;
+ 
 type Props = { params: Promise<{ form_id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

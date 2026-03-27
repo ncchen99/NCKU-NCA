@@ -9,7 +9,9 @@ import {
   type CharterDocumentSlug,
 } from "@/lib/charter-documents";
 import { buildOgImageUrl } from "@/lib/seo";
-
+ 
+export const revalidate = 31_536_000;
+ 
 type Props = { params: Promise<{ slug: string }> };
 
 function isCharterSlug(s: string): s is CharterDocumentSlug {
