@@ -3,7 +3,7 @@ import { DEFAULT_PRIMARY_TAG, getPrimaryPostTag, getPublishedPosts } from "@/lib
 import { anyTimestampToDate } from "@/lib/datetime";
 import { PostListing } from "@/components/public/post-listing";
 
-export const revalidate = 300;
+export const revalidate = 31_536_000;
 
 type SearchParams = Record<string, string | string[] | undefined>;
 type Props = { searchParams: Promise<SearchParams> };

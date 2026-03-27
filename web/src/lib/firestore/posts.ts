@@ -5,7 +5,7 @@ import type { Post } from "@/types";
 
 const COLLECTION = "posts";
 
-const PUBLIC_POSTS_REVALIDATE_SECONDS = 300;
+const PUBLIC_POSTS_REVALIDATE_SECONDS = 31_536_000;
 
 type PublishedPostOptions = {
   category?: string;

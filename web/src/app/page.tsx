@@ -8,7 +8,7 @@ import { CanvasGrid } from "@/components/ui/canvas-grid";
 import { getOpenForms } from "@/lib/firestore/forms";
 import type { Form } from "@/types";
 
-export const revalidate = 300;
+export const revalidate = 31_536_000;
 
 export default async function Home() {
   let hasForms = false;

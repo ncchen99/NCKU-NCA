@@ -10,7 +10,7 @@ import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export const revalidate = 300;
+export const revalidate = 31_536_000;
 
 export async function generateStaticParams() {
   try {
