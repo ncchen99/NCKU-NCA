@@ -6,10 +6,10 @@ import { anyTimestampToDate, formatDateTimeZhTW } from "@/lib/datetime";
 import { buildOgImageUrl } from "@/lib/seo";
 import { ArrowLongLeftIcon } from "@heroicons/react/20/solid";
 import { FormClient } from "./form-client";
- 
+
 export const revalidate = 31_536_000;
 export const dynamicParams = true;
- 
+
 type Props = { params: Promise<{ form_id: string }> };
 
 export async function generateStaticParams() {
