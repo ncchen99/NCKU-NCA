@@ -39,7 +39,7 @@ export const metadata: Metadata = {
       {
         url: buildOgImageUrl({
           title: "成功大學社團聯合會",
-          subtitle: "NCKU NCA 官方平台",
+          subtitle: "NCKU CA 官方平台",
           path: "/",
         }),
         width: 1200,
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     images: [buildOgImageUrl({
       title: "成功大學社團聯合會",
-      subtitle: "NCKU NCA 官方平台",
+      subtitle: "NCKU CA 官方平台",
       path: "/",
     })],
   },

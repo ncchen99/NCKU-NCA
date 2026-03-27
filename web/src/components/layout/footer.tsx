@@ -41,7 +41,7 @@ export function Footer() {
                   成大社聯會
                 </span>
                 <span className="font-mono text-[13px] font-[700] uppercase tracking-wider text-neutral-400">
-                  NCKU NCA
+                  NCKU CA
                 </span>
               </div>
             </Link>

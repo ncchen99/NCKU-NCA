@@ -229,7 +229,7 @@ async function seedClubs(db: FirebaseFirestore.Firestore) {
 // 主程式
 // ---------------------------------------------------------------------------
 async function main() {
-  console.log("🚀 NCKU NCA Firestore 種子腳本啟動");
+  console.log("🚀 NCKU CA Firestore 種子腳本啟動");
   console.log("=".repeat(50));
 
   const envPath = resolve(PROJECT_ROOT, "web", ".env");

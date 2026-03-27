@@ -1,6 +1,6 @@
 # Wireframes — 頁面設計說明
 
-> 本資料夾收錄 NCKU NCA 官方平台所有頁面的 Wireframe 及設計文字描述。  
+> 本資料夾收錄 NCKU CA 官方平台所有頁面的 Wireframe 及設計文字描述。  
 > 視覺 Wireframe 使用 HTML 檔案呈現（可直接在瀏覽器開啟），  
 > 文字描述供 Stitches 等 AI 設計工具生成設計稿使用。  
 > 設計規範請參閱 `../DESIGN.md` 及 `../../specs/AGENTS.md`。
@@ -125,7 +125,7 @@ Footer（3 欄：品牌 2/4 + 快速導覽 1/4 + 聯絡資訊 1/4）
 
 **版型**：2 欄等寬 · neutral-50 背景
 
-- Section Heading（Inline）：「關於組織」深色粗體（22px, font-weight 700）+ 「About NCKU NCA」灰色中等字重（14px, neutral-600）同行
+- Section Heading（Inline）：「關於組織」深色粗體（22px, font-weight 700）+ 「About NCKU CA」灰色中等字重（14px, neutral-600）同行
 
 **左欄：使命說明**
 

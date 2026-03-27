@@ -701,7 +701,7 @@ async function seedAttendance(
 // 主程式
 // ---------------------------------------------------------------------------
 async function main() {
-  console.log("🚀 NCKU NCA 測試資料種子腳本啟動");
+  console.log("🚀 NCKU CA 測試資料種子腳本啟動");
   console.log("=".repeat(50));
 
   const envPath = resolve(PROJECT_ROOT, "web", ".env");

@@ -77,7 +77,7 @@ export function Navbar() {
               成大社聯會
             </span>
             <span className="font-mono text-[14px] font-[700] uppercase tracking-wider text-neutral-400 sm:text-[15px]">
-              NCKU NCA
+              NCKU CA
             </span>
           </div>
         </Link>

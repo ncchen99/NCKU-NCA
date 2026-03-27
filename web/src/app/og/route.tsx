@@ -9,7 +9,7 @@ function shorten(text: string, max: number): string {
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const title = shorten(searchParams.get("title")?.trim() || "成功大學社團聯合會", 60);
-    const subtitle = shorten(searchParams.get("subtitle")?.trim() || "NCKU NCA 官方平台", 36);
+    const subtitle = shorten(searchParams.get("subtitle")?.trim() || "NCKU CA 官方平台", 36);
     const path = shorten(searchParams.get("path")?.trim() || "/", 42);
 
     return new ImageResponse(

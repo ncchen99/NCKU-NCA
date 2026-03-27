@@ -209,7 +209,7 @@ export default async function NewsArticlePage({ params }: Props) {
                           ) : (
                             <div className="flex h-full w-full items-end bg-gradient-to-br from-neutral-200 via-neutral-100 to-white p-4">
                               <span className="font-mono text-[10px] tracking-wide text-neutral-500">
-                                NCKU NCA NEWS
+                                NCKU CA NEWS
                               </span>
                             </div>
                           )}

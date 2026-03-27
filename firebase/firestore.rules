@@ -4,7 +4,7 @@ service cloud.firestore {
 
     // ╔══════════════════════════════════════════════════════════════╗
     // ║  成功大學社團聯合會 — Firestore Security Rules              ║
-    // ║  NCKU NCA Official Platform                                 ║
+    // ║  NCKU CA Official Platform                                 ║
     // ║  原則：預設拒絕、RBAC Custom Claims、最小權限               ║
     // ╚══════════════════════════════════════════════════════════════╝
 

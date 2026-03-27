@@ -79,7 +79,7 @@ function LoginContent() {
             成功大學社團聯合會
           </h1>
           <p className="mt-1 text-[13px] text-neutral-500">
-            NCKU NCA 數位平台
+            NCKU CA 數位平台
           </p>
         </div>
 
