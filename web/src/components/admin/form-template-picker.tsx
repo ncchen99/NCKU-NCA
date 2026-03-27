@@ -48,26 +48,23 @@ export function FormTemplatePicker({
               key={tpl.key}
               type="button"
               onClick={() => setSelectedKey(tpl.key)}
-              className={`group flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${
-                isSelected
+              className={`group flex items-start gap-3 rounded-xl border p-4 text-left transition-all ${isSelected
                   ? "border-primary bg-primary/[0.03] ring-1 ring-primary/20"
                   : "border-border hover:border-neutral-300 hover:bg-neutral-50/50"
-              }`}
+                }`}
             >
               <div
-                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
-                  isSelected
+                className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${isSelected
                     ? "bg-primary/10 text-primary"
                     : "bg-neutral-100 text-neutral-500 group-hover:bg-neutral-200 group-hover:text-neutral-600"
-                }`}
+                  }`}
               >
                 <Icon className="h-5 w-5" />
               </div>
               <div className="min-w-0 flex-1">
                 <p
-                  className={`text-[13px] font-semibold ${
-                    isSelected ? "text-primary" : "text-neutral-900"
-                  }`}
+                  className={`text-[13px] font-semibold ${isSelected ? "text-primary" : "text-neutral-900"
+                    }`}
                 >
                   {tpl.label}
                 </p>

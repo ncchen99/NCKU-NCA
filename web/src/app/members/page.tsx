@@ -4,9 +4,9 @@ import { PublicLayout } from "@/components/layout/public-layout";
 import { CmsMarkdownWithToc } from "@/components/public/cms-markdown-with-toc";
 import { getSiteContent } from "@/lib/firestore/site-content";
 import { normalizeLocale } from "@/lib/i18n-config";
- 
+
 export const revalidate = 31_536_000;
- 
+
 export async function generateMetadata(): Promise<Metadata> {
   const locale = normalizeLocale(await getLocale());
   const isEn = locale === "en";

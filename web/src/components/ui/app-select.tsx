@@ -240,8 +240,8 @@ export function AppSelect({
                     role="option"
                     aria-selected={isSelected}
                     className={`flex w-full items-center px-3 py-2 text-left text-sm transition-colors hover:bg-neutral-50 ${isSelected
-                        ? optionSelectedCls
-                        : optionDefaultCls
+                      ? optionSelectedCls
+                      : optionDefaultCls
                       }`}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {

@@ -14,6 +14,8 @@ If you need Chinese documentation (中文的文件), please read: [README.zh-TW.
 
 ## Interface Demo
 
+> Although the UI supports multilingual switching, current article content is primarily written in Chinese, so Chinese text may still appear in content sections. 
+
 | Interface          | Image                                               |
 | ------------------ | --------------------------------------------------- |
 | 1. Homepage        | ![Homepage](data/assets/images/demo1-en.png)        |
@@ -95,7 +97,6 @@ NEXT_PUBLIC_DEFAULT_LOCALE=zh-TW
 
 `NEXT_PUBLIC_DEFAULT_LOCALE` controls the default locale (`zh-TW` or `en`).
 If disabled (default), the language switcher is hidden and the site uses Traditional Chinese.
-Although the UI supports multilingual switching, current article content is primarily written in Chinese, so Chinese text may still appear in content sections.
 
 ## Deployment and Configuration
 
